@@ -1,0 +1,4432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Astral Front — Galactic Command</title>
+<style>
+  :root {
+    --bg: #030712;
+    --panel: rgba(10, 17, 34, 0.88);
+    --panel-solid: #0a1122;
+    --border: rgba(56, 189, 248, 0.22);
+    --border-bright: rgba(56, 189, 248, 0.55);
+    --sky: #38bdf8;
+    --sky-glow: rgba(56, 189, 248, 0.35);
+    --rose: #fb7185;
+    --rose-glow: rgba(251, 113, 133, 0.35);
+    --amber: #fbbf24;
+    --amber-glow: rgba(251, 191, 36, 0.35);
+    --emerald: #34d399;
+    --text: #f1f5f9;
+    --muted: #64748b;
+    --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --font-sans: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: radial-gradient(circle at 30% 20%, #0b1630 0%, #030712 70%);
+    color: var(--text);
+    font-family: var(--font-sans);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* Subtle tactical scanline overlay */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.18) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* HEADER / TOP TELEMETRY BAR */
+  header {
+    background: var(--panel);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+    padding: 8px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    justify-content: space-between;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-emblem {
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid var(--sky);
+    transform: rotate(45deg);
+    display: grid;
+    place-items: center;
+    box-shadow: 0 0 12px var(--sky-glow);
+  }
+  .brand-emblem::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    background: var(--sky);
+  }
+  .brand h1 {
+    font-size: 15px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.16em;
+    text-shadow: 0 0 12px var(--sky-glow);
+  }
+  .brand .sub {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--sky);
+    letter-spacing: 0.05em;
+  }
+
+  .res {
+    display: flex;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+  .res > div {
+    background: rgba(2, 6, 23, 0.75);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--sky);
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%);
+  }
+  .res .lbl { color: var(--muted); font-size: 10px; text-transform: uppercase; }
+  .res .val { font-weight: 700; font-variant-numeric: tabular-nums; color: #fff; }
+  .res .inc { color: var(--emerald); font-size: 11px; font-variant-numeric: tabular-nums; }
+
+  .tabs {
+    display: flex;
+    background: rgba(2, 6, 23, 0.85);
+    border: 1px solid var(--border);
+    padding: 2px;
+    gap: 2px;
+  }
+  .tabs button {
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .tabs button.active {
+    background: rgba(56, 189, 248, 0.18);
+    color: var(--sky);
+    box-shadow: inset 0 -2px 0 var(--sky);
+  }
+  .tabs button:hover:not(.active) { color: #fff; background: rgba(255,255,255,0.04); }
+
+  .actions { display: flex; gap: 8px; }
+  button {
+    font-family: var(--font-mono);
+    letter-spacing: 0.04em;
+    transition: all 0.15s ease;
+  }
+  .actions button {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid var(--border-bright);
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    cursor: pointer;
+    clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  }
+  .actions button.primary {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #030712;
+    border: 1px solid #fcd34d;
+    box-shadow: 0 0 15px var(--amber-glow);
+    font-weight: 800;
+  }
+  .actions button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(1.15);
+  }
+  .actions button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* MAIN LAYOUT */
+  #main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    min-height: 0;
+  }
+  @media (max-width: 900px) {
+    #main { grid-template-columns: 1fr; grid-template-rows: 1fr 42vh; }
+  }
+
+  #mapWrap {
+    position: relative;
+    background: #02050e;
+    overflow: hidden;
+  }
+  /* Corner tactical brackets on map */
+  #mapWrap::before {
+    content: "SECTOR TELEMETRY // LIVE";
+    position: absolute;
+    top: 12px;
+    left: 14px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: rgba(56, 189, 248, 0.45);
+    pointer-events: none;
+    z-index: 2;
+  }
+  canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+
+  /* SIDE COMMAND CONSOLE */
+  #side {
+    background: var(--panel);
+    backdrop-filter: blur(12px);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #side .panel {
+    padding: 14px;
+    border-bottom: 1px solid var(--border);
+    overflow-y: auto;
+    max-height: 68vh;
+  }
+  #side h3 {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--sky);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  #side h3::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    background: var(--sky);
+    display: inline-block;
+  }
+  #side .title {
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    margin-bottom: 4px;
+    color: #fff;
+  }
+  #side .meta {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #94a3b8;
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+
+  /* SHIPYARD DROPDOWN MODULE */
+  .build-module {
+    background: rgba(2, 6, 23, 0.82);
+    border: 1px solid var(--border-bright);
+    border-left: 3px solid var(--amber);
+    padding: 9px 10px;
+    margin-bottom: 10px;
+  }
+  .build-module-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--amber);
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .build-controls {
+    display: flex;
+    gap: 6px;
+    align-items: stretch;
+  }
+  .tactical-select {
+    flex: 1;
+    min-width: 0;
+    background: #060d1f;
+    border: 1px solid var(--border-bright);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 7px 26px 7px 8px;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+  }
+  .tactical-select:hover, .tactical-select:focus {
+    border-color: var(--sky);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+  }
+  .tactical-select option {
+    background: #0a1122;
+    color: #f1f5f9;
+  }
+  .tactical-select option:disabled {
+    color: #475569;
+  }
+  .build-btn {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(56, 189, 248, 0.1));
+    border: 1px solid var(--sky);
+    color: var(--sky);
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 0 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .build-btn:hover:not(:disabled) {
+    background: var(--sky);
+    color: #030712;
+  }
+  .build-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .build-specs {
+    margin-top: 5px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: #94a3b8;
+  }
+
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 195px;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+  .list::-webkit-scrollbar, #log::-webkit-scrollbar { width: 4px; }
+  .list::-webkit-scrollbar-thumb, #log::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.3); }
+
+  .list-item {
+    background: rgba(2, 6, 23, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-left: 3px solid transparent;
+    padding: 8px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+  }
+  .list-item:hover {
+    border-color: var(--border-bright);
+    background: rgba(15, 23, 42, 0.9);
+  }
+  .sel-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid var(--border);
+    padding: 6px 8px;
+    margin-bottom: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--sky);
+  }
+  .sel-summary-btns { display: flex; gap: 4px; }
+  .sel-summary-btns button {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid var(--border-bright);
+    color: var(--text);
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+  .unit-check {
+    display: inline-block;
+    width: 14px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-weight: 800;
+    color: var(--sky);
+    margin-right: 4px;
+  }
+  .list-item.unit-off {
+    opacity: 0.55;
+  }
+  .list-item.selected {
+    border-color: var(--sky);
+    border-left-color: var(--sky);
+    background: rgba(56, 189, 248, 0.1);
+    box-shadow: inset 0 0 12px rgba(56, 189, 248, 0.12);
+  }
+  .list-item .row { display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
+
+  .badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .badge.p { background: rgba(56,189,248,0.16); border: 1px solid rgba(56,189,248,0.4); color: var(--sky); }
+  .badge.e { background: rgba(251,113,133,0.16); border: 1px solid rgba(251,113,133,0.4); color: var(--rose); }
+  .badge.n { background: rgba(148,163,184,0.14); border: 1px solid rgba(148,163,184,0.3); color: #cbd5e1; }
+  .badge.c { background: rgba(251,191,36,0.16); border: 1px solid rgba(251,191,36,0.4); color: var(--amber); }
+
+  .btn-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .btn-row button {
+    flex: 1 1 45%;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 8px 6px;
+    cursor: pointer;
+  }
+  .btn-row button:hover:not(:disabled) {
+    border-color: var(--sky);
+    background: rgba(56, 189, 248, 0.12);
+  }
+  .btn-row button.good { background: rgba(52,211,153,0.12); border-color: rgba(52,211,153,0.45); color: var(--emerald); }
+  .btn-row button.bad { background: rgba(251,113,133,0.12); border-color: rgba(251,113,133,0.45); color: var(--rose); }
+  .btn-row button.hint {
+    flex-basis: 100%;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px dashed rgba(56, 189, 248, 0.4);
+    color: var(--sky);
+    cursor: default;
+  }
+  .btn-row button:disabled:not(.hint) { opacity: 0.3; cursor: not-allowed; }
+
+  .log-header {
+    padding: 8px 14px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    background: rgba(2, 6, 23, 0.5);
+  }
+  #log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 14px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.45;
+    color: #94a3b8;
+  }
+  #log div {
+    margin-bottom: 6px;
+    padding: 5px 8px;
+    background: rgba(2, 6, 23, 0.65);
+    border-left: 2px solid var(--border-bright);
+  }
+  #log div:first-child {
+    color: #e2e8f0;
+    border-left-color: var(--amber);
+    background: rgba(251, 191, 36, 0.06);
+  }
+
+  /* OVERLAYS & MODALS */
+  .overlay {
+    position: fixed; inset: 0;
+    background: radial-gradient(circle at center, rgba(10, 17, 34, 0.88), rgba(2, 6, 23, 0.97));
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    padding: 16px;
+  }
+  .overlay.show { display: flex; }
+  .modal {
+    background: var(--panel-solid);
+    border: 1px solid var(--border-bright);
+    box-shadow: 0 0 50px rgba(56, 189, 248, 0.15);
+    padding: 32px 28px;
+    max-width: 460px;
+    width: 100%;
+    text-align: center;
+    clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+  }
+  .modal .kicker {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--amber);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .modal h2 {
+    font-size: 26px;
+    letter-spacing: 0.14em;
+    margin-bottom: 12px;
+    color: #fff;
+    text-shadow: 0 0 18px var(--sky-glow);
+  }
+  .modal p {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #94a3b8;
+    margin-bottom: 24px;
+  }
+  .modal button {
+    background: var(--sky);
+    color: #030712;
+    border: none;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 11px 20px;
+    cursor: pointer;
+    font-size: 12px;
+    margin: 4px;
+    box-shadow: 0 0 16px var(--sky-glow);
+  }
+  .modal button.secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border-bright);
+    box-shadow: none;
+  }
+
+  /* COMBAT OVERLAY */
+  #combat {
+    position: fixed; inset: 0;
+    background: #02050e;
+    display: none;
+    flex-direction: column;
+    z-index: 40;
+  }
+  #combat.show { display: flex; }
+  #combatCanvas { flex: 1; width: 100%; min-height: 0; }
+  #combatUI {
+    background: var(--panel);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border-bright);
+    padding: 12px 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  #combatUI .info {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--sky);
+  }
+  #combatUI button {
+    background: var(--sky);
+    color: #030712;
+    border: none;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 11px;
+    padding: 9px 16px;
+    cursor: pointer;
+  }
+  #combatCanvas {
+    cursor: crosshair;
+    touch-action: none;
+  }
+  #combatStage {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    overflow: hidden;
+  }
+  #combatRoster {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+  .unit-chip {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 5px 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .unit-chip.active {
+    border-color: var(--amber);
+    background: rgba(251, 191, 36, 0.16);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.25);
+  }
+  .unit-chip.dead {
+    opacity: 0.35;
+    cursor: not-allowed;
+    text-decoration: line-through;
+  }
+  .unit-chip-hp {
+    width: 32px;
+    height: 4px;
+    background: #1e293b;
+    overflow: hidden;
+  }
+  .unit-chip-hp > div {
+    height: 100%;
+    background: var(--emerald);
+  }
+  #combatTouch {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: none;
+    z-index: 5;
+  }
+  @media (pointer: coarse) {
+    #combatTouch.active { display: block; }
+  }
+  .c-joy {
+    position: absolute;
+    bottom: 18px;
+    width: 112px;
+    height: 112px;
+    border-radius: 50%;
+    background: rgba(10, 17, 34, 0.55);
+    border: 2px solid rgba(56, 189, 248, 0.45);
+    pointer-events: auto;
+    touch-action: none;
+  }
+  #cJoyMove { left: 18px; }
+  #cJoyAim { right: 18px; border-color: rgba(251, 113, 133, 0.55); }
+  .c-joy-knob {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(56, 189, 248, 0.75);
+    pointer-events: none;
+  }
+  #cJoyAim .c-joy-knob { background: rgba(251, 113, 133, 0.75); }
+  #cBtnDash {
+    position: absolute;
+    right: 24px;
+    bottom: 144px;
+    pointer-events: auto;
+    background: rgba(168, 85, 247, 0.85);
+    color: #fff;
+    border: 1px solid #e9d5ff;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 800;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-emblem"></div>
+    <div>
+      <h1>ASTRAL FRONT</h1>
+      <div class="sub" id="turnLabel">CYCLE 01 // SOLAR VANGUARD</div>
+    </div>
+  </div>
+  <div class="res" id="resBar">
+    <div><span class="lbl">CRD</span> <span class="val" id="rCredits">140</span> <span class="inc" id="iCredits">+40</span></div>
+    <div><span class="lbl">ALY</span> <span class="val" id="rAlloys">90</span> <span class="inc" id="iAlloys">+0</span></div>
+    <div><span class="lbl">MNP</span> <span class="val" id="rManpower">70</span> <span class="inc" id="iManpower">+25</span></div>
+  </div>
+  <div class="tabs" id="viewTabs">
+    <button class="active" data-view="GALAXY">Star Map</button>
+    <button data-view="PLANET">Surface Ops</button>
+  </div>
+  <div class="actions">
+    <button class="primary" id="btnEndTurn">End Cycle</button>
+    <button id="btnNew">Reset</button>
+  </div>
+</header>
+
+<div id="main">
+  <div id="mapWrap">
+    <canvas id="map"></canvas>
+  </div>
+  <div id="side">
+    <div class="panel" id="inspect">
+      <h3 id="inspectType">Star System</h3>
+      <div class="title" id="inspectName">—</div>
+      <div class="meta" id="inspectMeta"></div>
+      <div id="inspectBuild"></div>
+      <div class="list" id="inspectList"></div>
+      <div class="btn-row" id="inspectActions"></div>
+    </div>
+    <div class="log-header">Tactical Telemetry Log</div>
+    <div id="log"></div>
+  </div>
+</div>
+
+<!-- Main Menu -->
+<div class="overlay show" id="menu">
+  <div class="modal">
+    <div class="kicker">Strategic Command Interface</div>
+    <h2>ASTRAL FRONT</h2>
+    <p>Coordinate interstellar task forces, blockade contested worlds, and execute tactical orbital and planetary assaults across the sector.</p>
+    <button onclick="startCampaign()">Initialize Campaign</button>
+    <button class="secondary" onclick="startCampaign(true)">Quick Skirmish</button>
+  </div>
+</div>
+
+<!-- Combat Overlay -->
+<div id="combat">
+  <header>
+    <div class="brand">
+      <div class="brand-emblem"></div>
+      <div>
+        <h1 id="combatTitle">TACTICAL ENGAGEMENT</h1>
+        <div class="sub" id="combatSub">REAL-TIME // WASD + MOUSE • TAB TO HOT-SWAP</div>
+      </div>
+    </div>
+    <div class="actions">
+      <button id="btnCombatMute">SFX: ON</button>
+      <button id="btnAutoResolve">Auto-Resolve</button>
+      <button id="btnEndCombat" class="primary" style="display:none">Return to Sector</button>
+    </div>
+  </header>
+  <div id="combatStage">
+    <canvas id="combatCanvas"></canvas>
+    <div id="combatTouch">
+      <div class="c-joy" id="cJoyMove"><div class="c-joy-knob" id="cJoyMoveKnob"></div></div>
+      <div class="c-joy" id="cJoyAim"><div class="c-joy-knob" id="cJoyAimKnob"></div></div>
+      <button id="cBtnDash">DASH</button>
+    </div>
+  </div>
+  <div id="combatUI">
+    <div id="combatRoster"></div>
+    <div class="info" id="combatInfo">WASD Move • Mouse Aim/Fire • Shift Dash • Tab/1-6 Hot-Swap</div>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// UTIL & RNG
+// ============================================================================
+const rand = (a=1,b=0) => Math.random()*(a-b)+b;
+const irand = (a,b) => Math.floor(rand(a,b+1));
+const pick = a => a[irand(0,a.length-1)];
+const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+
+function uid(prefix='id') {
+  return prefix + '-' + Math.random().toString(36).slice(2,9);
+}
+
+// ============================================================================
+// GAME DATA
+// ============================================================================
+const SHIP_TYPES = {
+  CORVETTE:  { name:'Corvette',  hp:40,  shields:20, fire:12, cost:{c:20,a:40,m:0},  desc:'Fast interceptor • 12 ATK / 40 HP' },
+  CRUISER:   { name:'Cruiser',   hp:90,  shields:50, fire:28, cost:{c:50,a:120,m:0}, desc:'Heavy line warship • 28 ATK / 90 HP' },
+  CARRIER:   { name:'Carrier',   hp:70,  shields:40, fire:18, cost:{c:60,a:140,m:0}, desc:'Fleet command hull • 18 ATK / 70 HP' },
+  TRANSPORT: { name:'Transport', hp:50,  shields:15, fire:6,  cost:{c:30,a:60,m:0},  cargo:4, desc:'Troop lander (4 reg) • 6 ATK / 50 HP' }
+};
+
+const REG_TYPES = {
+  INFANTRY:   { name:'Infantry',   hp:100, atk:18, def:16, range:2, cost:{c:15,a:0,m:30}, desc:'Line troops • 18 ATK / 100 HP / RNG 2' },
+  SKIRMISHER: { name:'Skirmisher', hp:70,  atk:14, def:10, range:4, cost:{c:20,a:0,m:30}, desc:'Light recon • 14 ATK / 70 HP / RNG 4' },
+  MECH:       { name:'Mech Cav',   hp:120, atk:26, def:18, range:2, cost:{c:0,a:50,m:25}, desc:'Armored assault • 26 ATK / 120 HP / RNG 2' },
+  ARTILLERY:  { name:'Artillery',  hp:60,  atk:32, def:8,  range:5, cost:{c:0,a:55,m:20}, desc:'Long-range fire • 32 ATK / 60 HP / RNG 5' }
+};
+
+const SECTOR_TYPES = {
+  LANDING:  { label:'Landing Zone',    code:'LZ', income:{c:10,a:0,m:0} },
+  SPACEPORT:{ label:'Spaceport',       code:'SP', income:{c:0,a:0,m:25} },
+  BATTERY:  { label:'Orbital Battery', code:'OB', income:{c:10,a:0,m:0} },
+  SHIELD:   { label:'Shield Gen',      code:'SG', income:{c:10,a:0,m:0} },
+  HIVE:     { label:'Industrial Hive', code:'IH', income:{c:0,a:30,m:0} },
+  CAPITAL:  { label:'Capital Citadel', code:'HQ', income:{c:40,a:0,m:0} }
+};
+
+const BUILDING_TYPES = {
+  FORTIFY:   { name:'Fortify (+1 Fort)', type:'FORTIFY',   cost:{c:25,a:20,m:0}, desc:'Reinforce sector defenses (+2 DEF per level)' },
+  SPACEPORT: { name:'Spaceport',         type:'SPACEPORT', cost:{c:60,a:80,m:0}, desc:'Enables shipyard & troop recruitment (+25 MNP)' },
+  HIVE:      { name:'Industrial Hive',   type:'HIVE',      cost:{c:45,a:50,m:0}, desc:'Heavy alloy refinery (+30 ALY per cycle)' },
+  BATTERY:   { name:'Orbital Battery',   type:'BATTERY',   cost:{c:35,a:45,m:0}, desc:'Planetary defense grid (+10 CRD per cycle)' },
+  SHIELD:    { name:'Shield Gen',        type:'SHIELD',    cost:{c:40,a:40,m:0}, desc:'Reduces orbital bombardment impact (+10 CRD)' }
+};
+
+const PLANET_THEMES = {
+  's0-p': { biome:'DESERT', name:'Helios Dune Wastes', fill:'rgba(48, 37, 22, 0.92)', stroke:'rgba(251, 191, 36, 0.55)', core:'rgba(245, 158, 11, 0.18)', ground:'#a8793d', accent:'#e8bd72', haze:'rgba(231,177,91,0.16)' },
+  's1-p': { biome:'JUNGLE', name:'Aurelia Verdant Wilds', fill:'rgba(9, 38, 29, 0.93)', stroke:'rgba(52, 211, 153, 0.52)', core:'rgba(16, 185, 129, 0.18)', ground:'#315b42', accent:'#83c77b', haze:'rgba(63,160,105,0.17)' },
+  's2-p': { biome:'ICE', name:'Kestrel Frozen Shelf', fill:'rgba(17, 37, 55, 0.94)', stroke:'rgba(125, 211, 252, 0.56)', core:'rgba(56, 189, 248, 0.18)', ground:'#7397aa', accent:'#c6edf7', haze:'rgba(142,205,230,0.18)' },
+  's3-p': { biome:'INDUSTRIAL', name:'Ferrum Foundry Expanse', fill:'rgba(39, 29, 30, 0.94)', stroke:'rgba(251, 113, 133, 0.52)', core:'rgba(244, 63, 94, 0.17)', ground:'#51474a', accent:'#d17a55', haze:'rgba(180,95,75,0.15)' },
+  's4-p': { biome:'JUNGLE', name:'Veridia Canopy Frontier', fill:'rgba(10, 39, 37, 0.93)', stroke:'rgba(45, 212, 191, 0.52)', core:'rgba(20, 184, 166, 0.18)', ground:'#28564b', accent:'#9bd18b', haze:'rgba(39,166,145,0.16)' },
+  's5-p': { biome:'CRYSTAL', name:'Obsidian Shard Fields', fill:'rgba(29, 19, 39, 0.94)', stroke:'rgba(192, 132, 252, 0.54)', core:'rgba(147, 51, 234, 0.18)', ground:'#44334f', accent:'#c4a2f0', haze:'rgba(139,92,190,0.17)' },
+  's6-p': { biome:'DARK', name:'Nyx Umbral Badlands', fill:'rgba(17, 21, 43, 0.95)', stroke:'rgba(129, 140, 248, 0.54)', core:'rgba(99, 102, 241, 0.18)', ground:'#343b5c', accent:'#9da9e9', haze:'rgba(94,103,181,0.16)' },
+  's7-p': { biome:'VOLCANIC', name:'Vulkite Magma Barrens', fill:'rgba(49, 23, 13, 0.95)', stroke:'rgba(251, 146, 60, 0.58)', core:'rgba(249, 115, 22, 0.2)', ground:'#553027', accent:'#ff9a45', haze:'rgba(220,83,34,0.2)' },
+  's8-p': { biome:'URBAN', name:'Citadel Ruined Megacity', fill:'rgba(35, 20, 31, 0.95)', stroke:'rgba(251, 113, 133, 0.56)', core:'rgba(225, 29, 72, 0.18)', ground:'#48404b', accent:'#c2a3a8', haze:'rgba(161,87,111,0.16)' },
+  's9-p': { biome:'BARREN', name:'Outpost Dust Flats', fill:'rgba(21, 33, 47, 0.94)', stroke:'rgba(148, 163, 184, 0.5)', core:'rgba(100, 116, 139, 0.17)', ground:'#53606b', accent:'#aab8c2', haze:'rgba(119,147,166,0.15)' }
+};
+
+// ============================================================================
+// STATE & AMBIENT PARTICLES
+// ============================================================================
+let G = null;
+let view = 'GALAXY';
+let selected = null;
+let selectedUnitIds = new Set();
+let selectedShipHull = 'CORVETTE';
+let selectedRegType = 'INFANTRY';
+let selectedBuilding = 'FORTIFY';
+let hoverNode = null;
+let combat = null;
+let logLines = [];
+let animTime = 0;
+
+// Starfield background generator
+const STARS = Array.from({length: 160}, () => ({
+  x: Math.random(),
+  y: Math.random(),
+  r: Math.random() * 1.4 + 0.3,
+  a: Math.random() * 0.6 + 0.2,
+  speed: Math.random() * 0.8 + 0.2
+}));
+
+function log(msg) {
+  logLines.unshift(msg);
+  if (logLines.length > 40) logLines.pop();
+  const el = document.getElementById('log');
+  if (el) el.innerHTML = logLines.map(l => `<div>${l}</div>`).join('');
+}
+
+// ============================================================================
+// GENERATORS
+// ============================================================================
+function makeShip(type, owner) {
+  const t = SHIP_TYPES[type];
+  return {
+    id: uid('ship'),
+    type,
+    name: (owner==='P'?'SNS ':'IHS ') + t.name,
+    hp: t.hp, maxHp: t.hp,
+    shields: t.shields, maxShields: t.shields,
+    fire: t.fire,
+    cargo: []
+  };
+}
+
+function makeRegiment(type, owner) {
+  const t = REG_TYPES[type];
+  return {
+    id: uid('reg'),
+    type,
+    name: t.name,
+    owner,
+    hp: t.hp, maxHp: t.hp,
+    atk: t.atk, def: t.def, range: t.range
+  };
+}
+
+function makeFleet(owner, systemId, ships) {
+  return {
+    id: uid('fleet'),
+    name: owner==='P' ? 'Solar Squadron' : 'Hegemony Flotilla',
+    owner,
+    systemId,
+    ships: ships || [],
+    moved: false,
+    acted: false
+  };
+}
+
+function makePlanet(id, name, owner) {
+  const sectors = [
+    { id: id+'-land', name: name+' Dropzone', type:'LANDING',  owner, x:24, y:54, fort:1, armyId:null },
+    { id: id+'-port', name: name+' Starport', type:'SPACEPORT',owner, x:40, y:30, fort:2, armyId:null },
+    { id: id+'-bat',  name: name+' Battery',  type:'BATTERY',  owner, x:60, y:26, fort:2, armyId:null },
+    { id: id+'-sh',   name: name+' Dome',     type:'SHIELD',   owner, x:48, y:70, fort:2, armyId:null },
+    { id: id+'-hive', name: name+' Forge',    type:'HIVE',     owner, x:70, y:60, fort:1, armyId:null },
+    { id: id+'-cap',  name: name+' Citadel',  type:'CAPITAL',  owner, x:78, y:40, fort:3, armyId:null }
+  ];
+  const links = {
+    [id+'-land']: [id+'-port', id+'-sh'],
+    [id+'-port']: [id+'-land', id+'-bat', id+'-sh'],
+    [id+'-bat']:  [id+'-port', id+'-hive', id+'-cap'],
+    [id+'-sh']:   [id+'-land', id+'-port', id+'-hive'],
+    [id+'-hive']: [id+'-sh', id+'-bat', id+'-cap'],
+    [id+'-cap']:  [id+'-bat', id+'-hive']
+  };
+  sectors.forEach(s => s.links = links[s.id] || []);
+
+  const armies = {};
+  const garrison = {
+    id: uid('army'),
+    name: name + ' Garrison',
+    owner,
+    sectorId: id+'-cap',
+    moved: false,
+    regs: [
+      makeRegiment('INFANTRY', owner),
+      makeRegiment('INFANTRY', owner),
+      makeRegiment('SKIRMISHER', owner),
+      makeRegiment('ARTILLERY', owner)
+    ]
+  };
+  armies[garrison.id] = garrison;
+  sectors.find(s => s.id === id+'-cap').armyId = garrison.id;
+
+  return {
+    id, name,
+    orbital: owner,
+    blockaded: false,
+    bombardment: 0,
+    sectors,
+    armies,
+    turn: 1
+  };
+}
+
+function makeSystem(id, name, x, y, owner) {
+  const planet = makePlanet(id+'-p', name + ' Prime', owner);
+  return {
+    id, name, x, y,
+    owner,
+    intel: owner==='P' ? 'VISIBLE' : (Math.random()<0.4?'SURVEYED':'UNKNOWN'),
+    lanes: [],
+    planets: [planet],
+    lastEnemyPower: null
+  };
+}
+
+function createCampaign(quick = false) {
+  const systems = [
+    makeSystem('s0', 'Helios', 18, 48, 'P'),
+    makeSystem('s1', 'Aurelia', 32, 28, 'P'),
+    makeSystem('s2', 'Kestrel', 48, 18, 'N'),
+    makeSystem('s3', 'Ferrum', 68, 32, 'E'),
+    makeSystem('s4', 'Veridia', 55, 52, 'N'),
+    makeSystem('s5', 'Obsidian', 78, 58, 'E'),
+    makeSystem('s6', 'Nyx', 40, 72, 'N'),
+    makeSystem('s7', 'Vulkite', 22, 78, 'N'),
+    makeSystem('s8', 'Citadel', 88, 40, 'E'),
+    makeSystem('s9', 'Outpost', 12, 30, 'P')
+  ];
+
+  const lanePairs = [
+    ['s0','s1'],['s0','s9'],['s0','s4'],['s1','s2'],['s1','s4'],
+    ['s2','s3'],['s2','s4'],['s3','s5'],['s3','s8'],['s4','s5'],
+    ['s4','s6'],['s5','s8'],['s6','s7'],['s6','s5'],['s7','s0']
+  ];
+  lanePairs.forEach(([a,b]) => {
+    const A = systems.find(s=>s.id===a), B = systems.find(s=>s.id===b);
+    if (A && B) { A.lanes.push(b); B.lanes.push(a); }
+  });
+
+  if (quick) {
+    systems.forEach(s => { if (s.intel === 'UNKNOWN') s.intel = 'SURVEYED'; });
+  }
+
+  const fleets = {};
+  const pf1 = makeFleet('P', 's0', [
+    makeShip('CRUISER','P'), makeShip('CORVETTE','P'), makeShip('TRANSPORT','P')
+  ]);
+  pf1.ships[2].cargo = [makeRegiment('INFANTRY','P'), makeRegiment('MECH','P')];
+  fleets[pf1.id] = pf1;
+
+  const pf2 = makeFleet('P', 's1', quick
+    ? [makeShip('CRUISER','P'), makeShip('CORVETTE','P'), makeShip('CORVETTE','P')]
+    : [makeShip('CORVETTE','P'), makeShip('CORVETTE','P')]
+  );
+  fleets[pf2.id] = pf2;
+
+  const ef1 = makeFleet('E', quick ? 's4' : 's3', [
+    makeShip('CRUISER','E'), makeShip('CORVETTE','E')
+  ]);
+  fleets[ef1.id] = ef1;
+
+  const ef2 = makeFleet('E', 's8', [
+    makeShip('CARRIER','E'), makeShip('CRUISER','E'), makeShip('TRANSPORT','E')
+  ]);
+  fleets[ef2.id] = ef2;
+
+  const helios = systems[0].planets[0];
+  helios.sectors.forEach(s => { if (s.type!=='CAPITAL') s.owner='P'; });
+  const exp = {
+    id: uid('army'),
+    name: 'Vanguard Expedition',
+    owner: 'P',
+    sectorId: helios.sectors.find(s=>s.type==='SPACEPORT').id,
+    moved: false,
+    regs: [
+      makeRegiment('INFANTRY','P'),
+      makeRegiment('INFANTRY','P'),
+      makeRegiment('SKIRMISHER','P'),
+      makeRegiment('MECH','P'),
+      makeRegiment('ARTILLERY','P')
+    ]
+  };
+  helios.armies[exp.id] = exp;
+  helios.sectors.find(s=>s.type==='SPACEPORT').armyId = exp.id;
+  helios.orbital = 'P';
+
+  return {
+    turn: 1,
+    faction: 'SOLAR_VANGUARD',
+    resources: quick
+      ? { P: {c:280, a:200, m:140}, E: {c:240, a:180, m:120} }
+      : { P: {c:140, a:90, m:70}, E: {c:160, a:110, m:80} },
+    income: { P: {c:0,a:0,m:0}, E: {c:0,a:0,m:0} },
+    systems,
+    fleets,
+    activePlanetId: systems[0].planets[0].id,
+    selectedSystemId: systems[0].id
+  };
+}
+
+// ============================================================================
+// ECONOMY
+// ============================================================================
+function computeIncome(owner) {
+  const inc = {c:0, a:0, m:0};
+  G.systems.forEach(sys => {
+    sys.planets.forEach(p => {
+      if (p.blockaded) return;
+      p.sectors.forEach(s => {
+        if (s.owner !== owner) return;
+        const t = SECTOR_TYPES[s.type];
+        if (t) {
+          inc.c += t.income.c;
+          inc.a += t.income.a;
+          inc.m += t.income.m;
+        }
+      });
+    });
+  });
+  return inc;
+}
+
+function refreshIncome() {
+  G.income.P = computeIncome('P');
+  G.income.E = computeIncome('E');
+  G.income.E.c = Math.round(G.income.E.c * 1.1);
+  G.income.E.a = Math.round(G.income.E.a * 1.1);
+}
+
+function applyIncome() {
+  refreshIncome();
+  ['P','E'].forEach(o => {
+    G.resources[o].c += G.income[o].c;
+    G.resources[o].a += G.income[o].a;
+    G.resources[o].m += G.income[o].m;
+  });
+}
+
+function canAfford(owner, cost) {
+  const r = G.resources[owner];
+  return r.c >= cost.c && r.a >= cost.a && r.m >= cost.m;
+}
+function pay(owner, cost) {
+  G.resources[owner].c -= cost.c;
+  G.resources[owner].a -= cost.a;
+  G.resources[owner].m -= cost.m;
+}
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+function findPlanet(planetId) {
+  for (const sys of G.systems) {
+    const p = sys.planets.find(pl => pl.id === planetId);
+    if (p) return { sys, planet: p };
+  }
+  return null;
+}
+
+function fleetPower(f) {
+  return f.ships.reduce((s,sh) => s + sh.fire + Math.floor(sh.hp/10), 0);
+}
+
+function armyPower(army) {
+  return army.regs.reduce((s,r) => s + r.atk + Math.floor(r.hp/5), 0);
+}
+
+function getFleetsAt(systemId) {
+  return Object.values(G.fleets).filter(f => f.systemId === systemId);
+}
+
+function updateSystemOwner(sys) {
+  const planets = sys.planets;
+  const owners = new Set(planets.map(p => p.orbital));
+  if (owners.size === 1) sys.owner = [...owners][0];
+  else sys.owner = 'C';
+}
+
+function summarizeShipsCompact(ships) {
+  if (!ships || !ships.length) return '';
+  const counts = {};
+  const code = { CORVETTE:'CV', CRUISER:'CR', CARRIER:'CA', TRANSPORT:'TR' };
+  ships.forEach(sh => {
+    const k = code[sh.type] || sh.type.slice(0, 2);
+    counts[k] = (counts[k] || 0) + 1;
+  });
+  return Object.entries(counts).map(([k,v]) => `${v}${k}`).join(' ');
+}
+
+function summarizeShips(ships) {
+  if (!ships || !ships.length) return 'None';
+  const counts = {};
+  ships.forEach(sh => {
+    const n = SHIP_TYPES[sh.type] ? SHIP_TYPES[sh.type].name : sh.type;
+    counts[n] = (counts[n] || 0) + 1;
+  });
+  return Object.entries(counts).map(([k,v]) => v > 1 ? `${v}×${k}` : k).join(', ');
+}
+
+function selectAllUnitsForCurrent() {
+  selectedUnitIds.clear();
+  if (!G || !selected) return;
+  if (selected.type === 'fleet') {
+    const f = G.fleets[selected.id];
+    if (f && f.owner === 'P') f.ships.forEach(sh => selectedUnitIds.add(sh.id));
+  } else if (selected.type === 'army') {
+    const found = findPlanet(G.activePlanetId);
+    const army = found && found.planet.armies[selected.id];
+    if (army && army.owner === 'P') army.regs.forEach(r => selectedUnitIds.add(r.id));
+  }
+}
+
+function summarizeRegs(regs) {
+  if (!regs || !regs.length) return 'None';
+  const counts = {};
+  const short = { INFANTRY:'Inf', SKIRMISHER:'Skr', MECH:'Mech', ARTILLERY:'Art' };
+  regs.forEach(r => {
+    const k = short[r.type] || r.name;
+    counts[k] = (counts[k] || 0) + 1;
+  });
+  return Object.entries(counts).map(([k,v]) => v > 1 ? `${v}×${k}` : k).join(', ');
+}
+
+function summarizeRegsCompact(regs) {
+  if (!regs || !regs.length) return '';
+  const counts = {};
+  const code = { INFANTRY:'I', SKIRMISHER:'S', MECH:'M', ARTILLERY:'A' };
+  regs.forEach(r => {
+    const k = code[r.type] || r.type[0];
+    counts[k] = (counts[k] || 0) + 1;
+  });
+  return Object.entries(counts).map(([k,v]) => `${v}${k}`).join(' ');
+}
+
+function fleetCargoRegs(f) {
+  return f.ships.reduce((arr, sh) => arr.concat(sh.cargo || []), []);
+}
+
+function ownerBadgeClass(owner) {
+  if (owner === 'P') return 'p';
+  if (owner === 'E') return 'e';
+  if (owner === 'C') return 'c';
+  return 'n';
+}
+
+// ============================================================================
+// SPACE ACTIONS
+// ============================================================================
+function mergePlayerFleets(systemId) {
+  const pFleets = getFleetsAt(systemId).filter(f => f.owner === 'P');
+  if (pFleets.length < 2) return;
+  const main = pFleets[0];
+  for (let i = 1; i < pFleets.length; i++) {
+    main.ships.push(...pFleets[i].ships);
+    if (pFleets[i].moved) main.moved = true;
+    if (pFleets[i].acted) main.acted = true;
+    delete G.fleets[pFleets[i].id];
+  }
+  selected = { type: 'fleet', id: main.id };
+  selectAllUnitsForCurrent();
+  log(`Merged squadrons into ${main.name} (${main.ships.length} ships).`);
+  render();
+}
+
+function moveFleet(fleetId, targetSysId) {
+  const f = G.fleets[fleetId];
+  if (!f || f.owner !== 'P' || f.moved) return;
+  const home = G.systems.find(s => s.id === f.systemId);
+  if (!home || !home.lanes.includes(targetSysId)) return;
+
+  const chosen = f.ships.filter(sh => selectedUnitIds.has(sh.id));
+  let movingFleet = f;
+  if (chosen.length > 0 && chosen.length < f.ships.length) {
+    // Split selected ships into a new task force
+    f.ships = f.ships.filter(sh => !selectedUnitIds.has(sh.id));
+    movingFleet = makeFleet('P', targetSysId, chosen);
+    movingFleet.name = 'Solar Task Force';
+    movingFleet.moved = true;
+    G.fleets[movingFleet.id] = movingFleet;
+    selected = { type: 'fleet', id: movingFleet.id };
+    selectAllUnitsForCurrent();
+    log(`Detached ${chosen.length} ship(s) (${summarizeShips(chosen)}) from ${f.name}.`);
+  } else {
+    f.systemId = targetSysId;
+    f.moved = true;
+  }
+  const target = G.systems.find(s => s.id === targetSysId);
+  if (target.intel === 'UNKNOWN') {
+    target.intel = 'SURVEYED';
+    log(`Fleet surveyed ${target.name}.`);
+  }
+  if (target.intel === 'SURVEYED') {
+    target.intel = 'VISIBLE';
+  }
+
+  G.selectedSystemId = targetSysId;
+  if (target.planets.length) G.activePlanetId = target.planets[0].id;
+  const enemies = getFleetsAt(targetSysId).filter(ef => ef.owner === 'E');
+  if (enemies.length) {
+    startNavalCombat(movingFleet, enemies[0]);
+  } else {
+    log(`${movingFleet.name} jumped to ${target.name} (${movingFleet.ships.length} ships).`);
+    render();
+  }
+}
+
+function buildShip(systemId, type) {
+  const sys = G.systems.find(s => s.id === systemId);
+  if (!sys) return;
+  const hasPort = sys.planets.some(p => !p.blockaded && p.sectors.some(s => s.type==='SPACEPORT' && s.owner==='P'));
+  if (!hasPort) { log('Need a friendly unblocked Spaceport.'); return; }
+  if (getFleetsAt(systemId).some(f => f.owner==='E')) { log('Cannot build while enemy fleet present.'); return; }
+  const cost = SHIP_TYPES[type].cost;
+  if (!canAfford('P', cost)) { log('Insufficient resources.'); return; }
+  pay('P', cost);
+  let fleet = getFleetsAt(systemId).find(f => f.owner==='P');
+  if (!fleet) {
+    fleet = makeFleet('P', systemId, []);
+    G.fleets[fleet.id] = fleet;
+  }
+  fleet.ships.push(makeShip(type, 'P'));
+  log(`Built ${SHIP_TYPES[type].name} at ${sys.name}.`);
+  render();
+}
+
+function toggleBlockade(fleetId, planetId) {
+  const f = G.fleets[fleetId];
+  const found = findPlanet(planetId);
+  if (!f || !found || f.systemId !== found.sys.id) return;
+  if (getFleetsAt(found.sys.id).some(ef => ef.owner==='E')) {
+    log('Enemy fleet prevents orbital supremacy.');
+    return;
+  }
+  found.planet.blockaded = !found.planet.blockaded;
+  refreshIncome();
+  log(found.planet.blockaded
+    ? `Blockade established over ${found.planet.name}.`
+    : `Blockade lifted over ${found.planet.name}.`);
+  render();
+}
+
+function bombard(fleetId, planetId) {
+  const f = G.fleets[fleetId];
+  const found = findPlanet(planetId);
+  if (!f || !found || f.acted || f.systemId !== found.sys.id) return;
+  if (getFleetsAt(found.sys.id).some(ef => ef.owner==='E')) return;
+  f.acted = true;
+  const hasShield = found.planet.sectors.some(s => s.type==='SHIELD' && s.owner!=='P');
+  const charges = hasShield ? 1 : 2;
+  found.planet.bombardment += charges;
+  log(`Orbital bombardment of ${found.planet.name}: +${charges} strike charge${charges>1?'s':''}${hasShield?' (Shield Gen dampened)':''}.`);
+  render();
+}
+
+function dropForces(fleetId, planetId) {
+  const f = G.fleets[fleetId];
+  const found = findPlanet(planetId);
+  if (!f || !found || f.systemId !== found.sys.id) return;
+  const transport = f.ships.find(s => s.type==='TRANSPORT' && s.cargo.length);
+  if (!transport) { log('No troops in transport.'); return; }
+  let targetSec = found.planet.sectors.find(s => (s.type==='LANDING' || s.type==='SPACEPORT') && (s.owner==='P' || !s.armyId));
+  if (!targetSec) targetSec = found.planet.sectors.find(s => s.type==='LANDING');
+  if (!targetSec) return;
+
+  if (targetSec.owner === 'E' || (targetSec.armyId && found.planet.armies[targetSec.armyId]?.owner==='E')) {
+    const invaders = {
+      id: uid('army'),
+      name: 'Drop Assault',
+      owner: 'P',
+      sectorId: null,
+      moved: true,
+      regs: transport.cargo.splice(0, transport.cargo.length)
+    };
+    startGroundCombat(found.planet, invaders, targetSec);
+  } else {
+    let army = targetSec.armyId ? found.planet.armies[targetSec.armyId] : null;
+    if (!army) {
+      army = { id: uid('army'), name: 'Drop Force', owner:'P', sectorId: targetSec.id, moved:false, regs:[] };
+      found.planet.armies[army.id] = army;
+      targetSec.armyId = army.id;
+    }
+    while (transport.cargo.length && army.regs.length < 6) {
+      army.regs.push(transport.cargo.shift());
+    }
+    targetSec.owner = 'P';
+    found.planet.orbital = found.planet.sectors.every(s => s.owner==='P') ? 'P' :
+                           found.planet.sectors.every(s => s.owner==='E') ? 'E' : 'C';
+    updateSystemOwner(found.sys);
+    refreshIncome();
+    log(`Ground forces dropped at ${targetSec.name}.`);
+    G.activePlanetId = found.planet.id;
+    view = 'PLANET';
+    document.querySelectorAll('#viewTabs button').forEach(b => b.classList.toggle('active', b.dataset.view==='PLANET'));
+    render();
+  }
+}
+
+// ============================================================================
+// PLANETARY ACTIONS
+// ============================================================================
+function moveArmy(planet, armyId, targetSecId) {
+  const army = planet.armies[armyId];
+  if (!army || army.owner!=='P' || army.moved) return;
+  const src = planet.sectors.find(s => s.armyId === armyId);
+  const dst = planet.sectors.find(s => s.id === targetSecId);
+  if (!src || !dst || !src.links.includes(dst.id)) return;
+
+  const chosen = army.regs.filter(r => selectedUnitIds.has(r.id));
+  const isSplit = chosen.length > 0 && chosen.length < army.regs.length;
+  const movingRegs = isSplit ? chosen : army.regs;
+
+  if (dst.owner === 'P' || dst.owner === 'N') {
+    if (dst.armyId) {
+      const dstArmy = planet.armies[dst.armyId];
+      if (!dstArmy || dstArmy.owner !== 'P') return;
+      if (dstArmy.regs.length + movingRegs.length > 6) {
+        log(`Cannot merge: destination army would exceed 6 regiments (${dstArmy.regs.length} + ${movingRegs.length}).`);
+        return;
+      }
+      if (isSplit) {
+        army.regs = army.regs.filter(r => !selectedUnitIds.has(r.id));
+      } else {
+        src.armyId = null;
+        delete planet.armies[army.id];
+      }
+      dstArmy.regs.push(...movingRegs);
+      dstArmy.moved = true;
+      selected = { type: 'army', id: dstArmy.id, sectorId: dst.id };
+      selectAllUnitsForCurrent();
+      log(`Merged ${movingRegs.length} regiment(s) into ${dstArmy.name} at ${dst.name}.`);
+      render();
+      return;
+    }
+
+    if (isSplit) {
+      army.regs = army.regs.filter(r => !selectedUnitIds.has(r.id));
+      const det = {
+        id: uid('army'),
+        name: 'Strike Detachment',
+        owner: 'P',
+        sectorId: dst.id,
+        moved: true,
+        regs: movingRegs
+      };
+      planet.armies[det.id] = det;
+      dst.armyId = det.id;
+      selected = { type: 'army', id: det.id, sectorId: dst.id };
+      selectAllUnitsForCurrent();
+      log(`Detached ${movingRegs.length} regiment(s) (${summarizeRegs(movingRegs)}) to ${dst.name}.`);
+    } else {
+      src.armyId = null;
+      dst.armyId = army.id;
+      army.sectorId = dst.id;
+      army.moved = true;
+      log(`${army.name} moved to ${dst.name}.`);
+    }
+    dst.owner = 'P';
+    const owners = new Set(planet.sectors.map(s=>s.owner));
+    planet.orbital = owners.size===1 ? [...owners][0] : 'C';
+    const found = findPlanet(planet.id);
+    if (found) updateSystemOwner(found.sys);
+    refreshIncome();
+    render();
+  } else {
+    if (isSplit) {
+      army.regs = army.regs.filter(r => !selectedUnitIds.has(r.id));
+      const strike = {
+        id: uid('army'),
+        name: 'Assault Force',
+        owner: 'P',
+        sectorId: null,
+        moved: true,
+        regs: movingRegs
+      };
+      selected = { type: 'army', id: strike.id, sectorId: dst.id };
+      selectAllUnitsForCurrent();
+      startGroundCombat(planet, strike, dst);
+    } else {
+      army.moved = true;
+      startGroundCombat(planet, army, dst);
+    }
+  }
+}
+
+function buildSectorStructure(planetId, sectorId, buildKey) {
+  const found = findPlanet(planetId);
+  if (!found) return;
+  const { planet } = found;
+  if (planet.blockaded) { log('Blockade prevents surface construction.'); return; }
+  const sec = planet.sectors.find(s => s.id === sectorId);
+  if (!sec || sec.owner !== 'P') return;
+  const b = BUILDING_TYPES[buildKey];
+  if (!b) return;
+  if (buildKey === 'FORTIFY') {
+    if (sec.fort >= 5) { log('Sector fortification is already at max level (5).'); return; }
+  } else {
+    if (sec.type === 'CAPITAL') { log('Cannot convert Capital Citadel.'); return; }
+    if (sec.type === buildKey) { log(`Sector already operates as ${b.name}.`); return; }
+  }
+  if (!canAfford('P', b.cost)) { log('Insufficient resources.'); return; }
+  pay('P', b.cost);
+
+  if (buildKey === 'FORTIFY') {
+    sec.fort += 1;
+    log(`Fortified ${sec.name} to Level ${sec.fort}.`);
+  } else {
+    sec.type = buildKey;
+    const baseName = sec.name.split(' ').slice(0, -1).join(' ') || planet.name;
+    const suffixMap = { SPACEPORT:'Starport', HIVE:'Forge', BATTERY:'Battery', SHIELD:'Dome' };
+    sec.name = `${baseName} ${suffixMap[buildKey] || b.name}`;
+    log(`Constructed ${b.name} at ${sec.name}.`);
+  }
+  refreshIncome();
+  render();
+}
+
+function recruit(planetId, sectorId, type) {
+  const found = findPlanet(planetId);
+  if (!found) return;
+  const { planet } = found;
+  if (planet.blockaded) { log('Blockade prevents recruitment.'); return; }
+  const sec = planet.sectors.find(s => s.id === sectorId);
+  if (!sec || sec.type!=='SPACEPORT' || sec.owner!=='P') return;
+  const cost = REG_TYPES[type].cost;
+  if (!canAfford('P', cost)) { log('Insufficient resources.'); return; }
+  let army = sec.armyId ? planet.armies[sec.armyId] : null;
+  if (army && army.regs.length >= 6) { log('Army is full (max 6).'); return; }
+  pay('P', cost);
+  if (!army) {
+    army = { id: uid('army'), name: sec.name+' Garrison', owner:'P', sectorId: sec.id, moved:false, regs:[] };
+    planet.armies[army.id] = army;
+    sec.armyId = army.id;
+  }
+  army.regs.push(makeRegiment(type, 'P'));
+  log(`Recruited ${REG_TYPES[type].name} at ${sec.name}.`);
+  render();
+}
+
+// ============================================================================
+// END TURN / AI
+// ============================================================================
+function endGalacticTurn() {
+  if (combat) return;
+  Object.values(G.fleets).forEach(f => {
+    if (f.owner==='P') { f.moved = false; f.acted = false; }
+  });
+  G.systems.forEach(sys => {
+    sys.planets.forEach(p => {
+      Object.values(p.armies).forEach(a => { if (a.owner==='P') a.moved = false; });
+      p.turn++;
+    });
+  });
+
+  applyIncome();
+  log(`--- Cycle ${String(G.turn).padStart(2,'0')} income applied ---`);
+
+  const combatTriggered = enemyTurn();
+  if (combatTriggered) return;
+
+  G.turn++;
+  document.getElementById('turnLabel').textContent = `CYCLE ${String(G.turn).padStart(2,'0')} // SOLAR VANGUARD`;
+  refreshIncome();
+  render();
+}
+
+function enemyTurn() {
+  let combatTriggered = false;
+  for (const f of Object.values(G.fleets).filter(f => f.owner === 'E')) {
+    if (f.moved) continue;
+    const home = G.systems.find(s => s.id === f.systemId);
+    if (!home) continue;
+    const targets = home.lanes.map(id => G.systems.find(s => s.id === id)).filter(Boolean);
+    let dest = targets.find(t => getFleetsAt(t.id).some(pf => pf.owner === 'P'));
+    if (!dest) dest = pick(targets);
+    if (!dest) continue;
+    f.systemId = dest.id;
+    f.moved = true;
+    const playerFleets = getFleetsAt(dest.id).filter(pf => pf.owner === 'P');
+    if (playerFleets.length && !combat) {
+      startNavalCombat(playerFleets[0], f);
+      combatTriggered = true;
+      break;
+    }
+    log(`Enemy fleet arrived at ${dest.name}.`);
+  }
+
+  // A live engagement pauses the remainder of the enemy strategic turn.
+  if (combatTriggered) return true;
+
+  G.systems.forEach(sys => {
+    sys.planets.forEach(p => {
+      Object.values(p.armies).filter(a => a.owner==='E' && !a.moved).forEach(army => {
+        const sec = p.sectors.find(s => s.armyId === army.id);
+        if (!sec) return;
+        const adjPlayer = sec.links
+          .map(id => p.sectors.find(s => s.id === id))
+          .find(s => s && s.owner==='P');
+        if (adjPlayer && armyPower(army) > 80) {
+          army.moved = true;
+          const defArmy = adjPlayer.armyId ? p.armies[adjPlayer.armyId] : null;
+          const atkP = armyPower(army);
+          const defP = defArmy ? armyPower(defArmy) : 40;
+          if (atkP >= defP) {
+            if (defArmy) {
+              defArmy.regs = defArmy.regs.filter(r => (r.hp -= Math.floor(r.maxHp*0.6)) > 0);
+              if (!defArmy.regs.length) {
+                delete p.armies[defArmy.id];
+                adjPlayer.armyId = null;
+              }
+            }
+            sec.armyId = null;
+            adjPlayer.owner = 'E';
+            adjPlayer.armyId = army.id;
+            army.sectorId = adjPlayer.id;
+            const owners = new Set(p.sectors.map(s=>s.owner));
+            p.orbital = owners.size===1 ? [...owners][0] : 'C';
+            updateSystemOwner(sys);
+            log(`Enemy captured ${adjPlayer.name} on ${p.name}!`);
+          } else {
+            army.regs = army.regs.filter(r => (r.hp -= Math.floor(r.maxHp*0.5)) > 0);
+            if (!army.regs.length) {
+              delete p.armies[army.id];
+              sec.armyId = null;
+            }
+            log(`Enemy assault on ${adjPlayer.name} repelled.`);
+          }
+        } else {
+          army.moved = true;
+        }
+      });
+      Object.values(p.armies).forEach(a => a.moved = false);
+    });
+  });
+
+  Object.values(G.fleets).forEach(f => { if (f.owner==='E') { f.moved = false; f.acted = false; } });
+  return combatTriggered;
+}
+
+// ============================================================================
+// REAL-TIME TWIN-STICK COMBAT ENGINE (AEGIS PROTOCOL INPUT & AUDIO PATTERNS)
+// ============================================================================
+const sfx = {
+  ctx: null,
+  muted: false,
+  init() {
+    if (!this.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) this.ctx = new AC();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+  },
+  _tone(type, f0, f1, dur, vol, delay = 0) {
+    if (!this.ctx || this.muted) return;
+    const t0 = this.ctx.currentTime + delay;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(Math.max(20, f0), t0);
+    if (f1 && f1 !== f0) osc.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + dur);
+    gain.gain.setValueAtTime(Math.max(0.0001, vol), t0);
+    gain.gain.exponentialRampToValueAtTime(0.0008, t0 + dur);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.01);
+  },
+  play(kind, vol = 0.8, side = null) {
+    if (this.muted) return;
+    this.init();
+    if (!this.ctx) return;
+    const v = clamp(vol, 0.1, 1.0);
+    // Solar weapons are brighter; Hegemony weapons carry a heavier, harsher undertone.
+    const factionPitch = side === 'E' ? 0.82 : 1.08;
+    if (kind === 'laser') {
+      this._tone(side === 'E' ? 'square' : 'sawtooth', 1420*factionPitch, 260*factionPitch, 0.08, 0.045*v);
+      this._tone('sawtooth', 1420*factionPitch, 260*factionPitch, 0.08, 0.08 * v);
+    } else if (kind === 'cannon') {
+      this._tone(side === 'E' ? 'square' : 'sawtooth', 320*factionPitch, 68*factionPitch, 0.14, 0.12 * v);
+      this._tone('square', 680, 140, 0.07, 0.06 * v);
+    } else if (kind === 'plasma') {
+      this._tone(side === 'E' ? 'sawtooth' : 'triangle', 760*factionPitch, 180*factionPitch, 0.12, 0.10 * v);
+    } else if (kind === 'hit') {
+      this._tone('square', 190, 60, 0.06, 0.08 * v);
+    } else if (kind === 'explode') {
+      this._tone('sawtooth', 140, 32, 0.28, 0.16 * v);
+      this._tone('square', 90, 28, 0.24, 0.10 * v, 0.02);
+    } else if (kind === 'dash') {
+      this._tone('triangle', 260, 620, 0.10, 0.09 * v);
+    } else if (kind === 'capture') {
+      this._tone('sine', 523, 784, 0.14, 0.11 * v);
+      this._tone('sine', 784, 1046, 0.18, 0.11 * v, 0.08);
+    } else if (kind === 'swap') {
+      this._tone('sine', 440, 660, 0.07, 0.07 * v);
+    }
+  }
+};
+
+const ARENA_W = 1400;
+const ARENA_H = 900;
+
+const COMBAT_AI_ACCURACY = 0.85;  // mult on AI damage; player units unaffected
+const COMBAT_PLAYER_DASH_CD = 1.9; // seconds; tune for feel
+const COMBAT_ROUT_THRESHOLD = 0.15; // HP% below which rout checks fire
+
+const COMBAT_MATCHUP = {
+  NAVAL: {
+    CORVETTE:  { CORVETTE: 1.0,  CRUISER: 0.6,  CARRIER: 1.4,  TRANSPORT: 1.6 },
+    CRUISER:   { CORVETTE: 1.35, CRUISER: 1.0,  CARRIER: 0.85, TRANSPORT: 1.5 },
+    CARRIER:   { CORVETTE: 1.10, CRUISER: 1.55, CARRIER: 1.0,  TRANSPORT: 1.8 },
+    TRANSPORT: { CORVETTE: 0.5,  CRUISER: 0.4,  CARRIER: 0.6,  TRANSPORT: 1.0 }
+  },
+  GROUND: {
+    INFANTRY:   { INFANTRY: 1.0,  SKIRMISHER: 0.9, MECH: 0.85, ARTILLERY: 1.45 },
+    SKIRMISHER: { INFANTRY: 1.1,  SKIRMISHER: 1.0, MECH: 0.75, ARTILLERY: 1.25 },
+    MECH:       { INFANTRY: 1.25, SKIRMISHER: 1.2, MECH: 1.0,  ARTILLERY: 0.85 },
+    ARTILLERY:  { INFANTRY: 0.75, SKIRMISHER: 0.7, MECH: 1.35, ARTILLERY: 1.0 }
+  }
+};
+
+const cCanvas = document.getElementById('combatCanvas');
+const cCtx = cCanvas.getContext('2d');
+const cInput = {
+  keys: {},
+  mouseX: 0,
+  mouseY: 0,
+  mouseDown: false,
+  joyMoveX: 0,
+  joyMoveY: 0,
+  joyAimX: 0,
+  joyAimY: 0,
+  joyAimActive: false
+};
+
+function shipCombatProfile(type) {
+  switch (type) {
+    case 'CRUISER':   return { speed: 145, range: 410, cd: 0.58, projSpeed: 620, radius: 22, sfx: 'cannon', spread: 1, preferRange: 0.72 };
+    case 'CARRIER':   return { speed: 120, range: 430, cd: 0.30, projSpeed: 520, radius: 24, sfx: 'plasma', spread: 1, preferRange: 0.85 };
+    case 'TRANSPORT': return { speed: 155, range: 250, cd: 0.52, projSpeed: 500, radius: 19, sfx: 'laser',  spread: 1, preferRange: 0.55 };
+    default:          return { speed: 225, range: 330, cd: 0.38, projSpeed: 700, radius: 15, sfx: 'laser',  spread: 1, preferRange: 0.95 };
+  }
+}
+
+function regCombatProfile(type) {
+  switch (type) {
+    case 'SKIRMISHER': return { speed: 210, range: 350, cd: 0.25, projSpeed: 680, radius: 14, sfx: 'laser',  splash: 0,  preferRange: 0.90 };
+    case 'MECH':       return { speed: 145, range: 260, cd: 0.16, projSpeed: 560, radius: 18, sfx: 'plasma', splash: 0,  preferRange: 0.65 };
+    case 'ARTILLERY':  return { speed: 115, range: 450, cd: 2.10, projSpeed: 460, radius: 17, sfx: 'cannon', splash: 56, preferRange: 1.00 };
+    default:           return { speed: 168, range: 250, cd: 0.36, projSpeed: 600, radius: 14, sfx: 'laser',  splash: 0,  preferRange: 0.72 };
+  }
+}
+
+function generateCombatArena(kind, planet, defenderSector) {
+  // Fresh tactical geometry per engagement; the combat footprint remains 1400 x 900.
+  const obstacles = [], objectives = [], decorations = [];
+  const seed = Math.floor(Math.random() * 0x7fffffff);
+  let state = seed || 1;
+  const random = (min, max) => {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return min + (state / 4294967296) * (max - min);
+  };
+  const integer = (min, max) => Math.floor(random(min, max + 1));
+  const clearOf = (x, y, r, pad = 36) =>
+    !obstacles.some(o => Math.hypot(o.x - x, o.y - y) < (o.r || 20) + r + pad);
+
+  if (kind === 'NAVAL') {
+    // Varied asteroid belts, with both fleet deployment corridors kept clear.
+    const count = integer(9, 15);
+    let attempts = 0;
+    while (obstacles.length < count && attempts++ < count * 14) {
+      const r = random(22, 58), x = random(315, ARENA_W - 315), y = random(105, ARENA_H - 105);
+      if (!clearOf(x, y, r, 34)) continue;
+      const sides = integer(6, 9), rotation = random(0, Math.PI * 2), verts = [];
+      for (let k = 0; k < sides; k++) {
+        const a = rotation + k / sides * Math.PI * 2, vr = r * random(0.72, 1.18);
+        verts.push({ x: Math.cos(a) * vr, y: Math.sin(a) * vr });
+      }
+      obstacles.push({ kind: 'ASTEROID', x, y, r, verts, hp: Math.round(145 + r * 3.4), maxHp: Math.round(145 + r * 3.4), destructible: true, seed: obstacles.length });
+    }
+    const relaySpots = [];
+    let relayAttempts = 0;
+    while (relaySpots.length < 2 && relayAttempts++ < 100) {
+      const x = random(430, 970), y = random(235, 665);
+      if (relaySpots.every(q => Math.hypot(q.x - x, q.y - y) > 270) &&
+          !obstacles.some(o => Math.hypot(o.x - x, o.y - y) < o.r + 105)) relaySpots.push({ x, y });
+    }
+    if (relaySpots.length < 2) relaySpots.splice(0, relaySpots.length,
+      { x: ARENA_W * 0.5, y: ARENA_H * 0.30 }, { x: ARENA_W * 0.5, y: ARENA_H * 0.70 });
+    objectives.push(
+      { id: 'obj-0', name: 'Nav Relay Alpha', x: relaySpots[0].x, y: relaySpots[0].y, r: 58, owner: 'N', prog: 0, reinforceTimer: 0 },
+      { id: 'obj-1', name: 'Nav Relay Beta', x: relaySpots[1].x, y: relaySpots[1].y, r: 58, owner: 'N', prog: 0, reinforceTimer: 0 }
+    );
+  } else {
+    // Irregular ridgelines and randomized defensive emplacements on every planet battle.
+    const count = integer(8, 13);
+    let attempts = 0;
+    while (obstacles.filter(o => o.kind === 'RIDGE').length < count && attempts++ < count * 16) {
+      const r = random(22, 52), x = random(300, ARENA_W - 300), y = random(105, ARENA_H - 105);
+      if (!clearOf(x, y, r, 58)) continue;
+      const sides = integer(5, 8), rotation = random(0, Math.PI * 2), verts = [];
+      for (let k = 0; k < sides; k++) {
+        const a = rotation + k / sides * Math.PI * 2, vr = r * random(0.76, 1.2);
+        verts.push({ x: Math.cos(a) * vr, y: Math.sin(a) * vr });
+      }
+      obstacles.push({ kind: 'RIDGE', x, y, r, verts, rotation, hp: 9999, maxHp: 9999, destructible: false });
+    }
+    const fort = defenderSector ? (defenderSector.fort || 1) : 1;
+    const barricadeCount = Math.max(1, Math.min(6, fort + integer(0, 2)));
+    let placed = 0, fortAttempts = 0;
+    while (placed < barricadeCount && fortAttempts++ < barricadeCount * 20) {
+      const r = random(15, 24), x = random(ARENA_W * 0.64, ARENA_W * 0.84), y = random(ARENA_H * 0.18, ARENA_H * 0.82);
+      if (!clearOf(x, y, r, 48)) continue;
+      obstacles.push({ kind: 'BARRICADE', x, y, r, angle: random(-0.35, 0.35), hp: 90 + fort * 25, maxHp: 90 + fort * 25, destructible: true });
+      placed++;
+    }
+    let lz = { x: random(ARENA_W * 0.43, ARENA_W * 0.57), y: random(ARENA_H * 0.30, ARENA_H * 0.70) };
+    let core = { x: random(ARENA_W * 0.70, ARENA_W * 0.84), y: random(ARENA_H * 0.28, ARENA_H * 0.72) };
+    let objAttempts = 0;
+    while (objAttempts++ < 80 && (
+      Math.hypot(lz.x - core.x, lz.y - core.y) < 280 ||
+      obstacles.some(o => Math.hypot(o.x - lz.x, o.y - lz.y) < o.r + 92) ||
+      obstacles.some(o => Math.hypot(o.x - core.x, o.y - core.y) < o.r + 100)
+    )) {
+      lz = { x: random(ARENA_W * 0.43, ARENA_W * 0.57), y: random(ARENA_H * 0.28, ARENA_H * 0.72) };
+      core = { x: random(ARENA_W * 0.70, ARENA_W * 0.84), y: random(ARENA_H * 0.25, ARENA_H * 0.75) };
+    }
+    objectives.push(
+      { id: 'obj-0', name: 'Forward LZ', x: lz.x, y: lz.y, r: 62, owner: 'N', prog: 0, reinforceTimer: 0 },
+      { id: 'obj-1', name: 'Sector Core', x: core.x, y: core.y, r: 66, owner: 'E', prog: -100, reinforceTimer: 0 }
+    );
+    // Non-colliding biome props give each world a recognizable silhouette language.
+    const biome = (PLANET_THEMES[planet?.id] || {}).biome || 'BARREN';
+    const decorType = ({ DESERT:'DUNE_ROCK', JUNGLE:'ALIEN_FLORA', ICE:'ICE_SPIRE', INDUSTRIAL:'INDUSTRIAL_WRECK', CRYSTAL:'CRYSTAL', DARK:'OBSIDIAN', VOLCANIC:'LAVA_VENT', URBAN:'RUIN', BARREN:'SCRAP' })[biome] || 'SCRAP';
+    const decorCount = biome === 'JUNGLE' ? 28 : biome === 'DESERT' ? 22 : 18;
+    for (let i = 0; i < decorCount; i++) {
+      const x = random(35, ARENA_W - 35), y = random(35, ARENA_H - 35);
+      if (x < 260 || x > ARENA_W - 260) continue;
+      if (objectives.some(o => Math.hypot(o.x - x, o.y - y) < o.r + 35)) continue;
+      if (obstacles.some(o => Math.hypot(o.x - x, o.y - y) < o.r + 18)) continue;
+      const hazardous = (biome === 'VOLCANIC' && i % 3 === 0) || (biome === 'CRYSTAL' && i % 4 === 0) || (biome === 'INDUSTRIAL' && i % 4 === 1);
+      decorations.push({ kind: decorType, x, y, scale: random(0.65, 1.45), angle: random(0, Math.PI * 2), variant: integer(0, 3), hazardous, hazardRadius: hazardous ? (biome === 'VOLCANIC' ? 54 : 43) : 0, hazardDamage: hazardous ? (biome === 'VOLCANIC' ? 5 : 3) : 0 });
+    }
+  }
+  return { obstacles, objectives, decorations, seed, width: ARENA_W, height: ARENA_H };
+}
+
+function startNavalCombat(playerFleet, enemyFleet) {
+  if (combat !== null) {
+    log('Warning: ignored duplicate naval combat while engagement is active.');
+    return;
+  }
+  const arena = generateCombatArena('NAVAL', null, null);
+  combat = {
+    kind: 'NAVAL',
+    player: JSON.parse(JSON.stringify(playerFleet)),
+    enemy: JSON.parse(JSON.stringify(enemyFleet)),
+    obstacles: arena.obstacles,
+    objectives: arena.objectives,
+    decorations: arena.decorations || [],
+    layoutSeed: arena.seed,
+    units: [],
+    projectiles: [],
+    particles: [],
+    wrecks: [],
+    shockwaves: [],
+    log: [],
+    winner: null,
+    endReason: '',
+    activeId: null,
+    camX: ARENA_W * 0.25,
+    camY: ARENA_H * 0.5,
+    elapsed: 0
+  };
+
+  combat.player.ships.forEach((s, i) => {
+    const prof = shipCombatProfile(s.type);
+    const yOff = (i - (combat.player.ships.length - 1) / 2) * 76;
+    combat.units.push({
+      id: s.id, side: 'P', ship: s,
+      x: 190, y: clamp(ARENA_H * 0.5 + yOff, 90, ARENA_H - 90),
+      vx: 0, vy: 0, aim: 0,
+      hp: s.hp, maxHp: s.maxHp,
+      shields: s.shields, maxShields: s.maxShields,
+      fire: s.fire, speed: prof.speed, range: prof.range,
+      cdMax: prof.cd, cd: 0, projSpeed: prof.projSpeed,
+      radius: prof.radius, sfx: prof.sfx, spread: prof.spread, splash: 0, preferRange: prof.preferRange,
+      dashCd: 0, dashTime: 0, dashVx: 0, dashVy: 0, invuln: 0, hitFlash: 0
+    });
+  });
+
+  combat.enemy.ships.forEach((s, i) => {
+    const prof = shipCombatProfile(s.type);
+    const yOff = (i - (combat.enemy.ships.length - 1) / 2) * 76;
+    combat.units.push({
+      id: s.id, side: 'E', ship: s,
+      x: ARENA_W - 190, y: clamp(ARENA_H * 0.5 + yOff, 90, ARENA_H - 90),
+      vx: 0, vy: 0, aim: Math.PI,
+      hp: s.hp, maxHp: s.maxHp,
+      shields: s.shields, maxShields: s.maxShields,
+      fire: s.fire, speed: prof.speed * 0.92, range: prof.range,
+      cdMax: prof.cd * 1.15, cd: rand(0.4, 0.1), projSpeed: prof.projSpeed,
+      radius: prof.radius, sfx: prof.sfx, spread: prof.spread, splash: 0, preferRange: prof.preferRange,
+      dashCd: 0, dashTime: 0, dashVx: 0, dashVy: 0, invuln: 0, hitFlash: 0
+    });
+  });
+
+  const firstP = combat.units.find(u => u.side === 'P');
+  combat.activeId = firstP ? firstP.id : null;
+  openCombatOverlay('NAVAL ENGAGEMENT', 'REAL-TIME // WASD + MOUSE • SHIFT DASH • TAB HOT-SWAP');
+  combatLog('Fleets engaged! Relay control calls in light patrol craft; eliminate the enemy fleet to win.');
+}
+
+function startGroundCombat(planet, attackerArmy, defenderSector) {
+  const defenderArmy = defenderSector.armyId ? planet.armies[defenderSector.armyId] : null;
+  const defRegs = defenderArmy ? JSON.parse(JSON.stringify(defenderArmy.regs)) :
+    [makeRegiment('INFANTRY','E'), makeRegiment('SKIRMISHER','E')];
+
+  const arena = generateCombatArena('GROUND', planet, defenderSector);
+  const fortBonus = (defenderSector.fort || 0) * 2;
+  const bombPenalty = planet.bombardment > 0 ? planet.bombardment * 8 : 0;
+
+  combat = {
+    kind: 'GROUND',
+    planet,
+    attackerArmy: JSON.parse(JSON.stringify(attackerArmy)),
+    defenderSector,
+    defenderArmy,
+    theme: (typeof PLANET_THEMES !== 'undefined' && PLANET_THEMES[planet.id]) || null,
+    obstacles: arena.obstacles,
+    objectives: arena.objectives,
+    decorations: arena.decorations || [],
+    layoutSeed: arena.seed,
+    units: [],
+    projectiles: [],
+    particles: [],
+    wrecks: [],
+    shockwaves: [],
+    log: [],
+    winner: null,
+    endReason: '',
+    activeId: null,
+    camX: ARENA_W * 0.25,
+    camY: ARENA_H * 0.5,
+    elapsed: 0
+  };
+
+  attackerArmy.regs.forEach((r, i) => {
+    const regCopy = JSON.parse(JSON.stringify(r));
+    const prof = regCombatProfile(regCopy.type);
+    const yOff = (i - (attackerArmy.regs.length - 1) / 2) * 68;
+    combat.units.push({
+      id: regCopy.id, side: 'P', reg: regCopy,
+      x: 180, y: clamp(ARENA_H * 0.5 + yOff, 90, ARENA_H - 90),
+      vx: 0, vy: 0, aim: 0,
+      hp: regCopy.hp, maxHp: regCopy.maxHp,
+      shields: 0, maxShields: 0,
+      fire: regCopy.atk, def: regCopy.def || 10,
+      speed: prof.speed, range: prof.range,
+      cdMax: prof.cd, cd: 0, projSpeed: prof.projSpeed,
+      radius: prof.radius, sfx: prof.sfx, spread: 1, splash: prof.splash, preferRange: prof.preferRange,
+      dashCd: 0, dashTime: 0, dashVx: 0, dashVy: 0, invuln: 0, hitFlash: 0
+    });
+  });
+
+  defRegs.forEach((r, i) => {
+    r.def = (r.def || 10) + fortBonus;
+    if (bombPenalty > 0) r.hp = Math.max(10, r.hp - bombPenalty);
+    const prof = regCombatProfile(r.type);
+    const yOff = (i - (defRegs.length - 1) / 2) * 68;
+    combat.units.push({
+      id: r.id, side: 'E', reg: r,
+      x: ARENA_W - 200, y: clamp(ARENA_H * 0.5 + yOff, 90, ARENA_H - 90),
+      vx: 0, vy: 0, aim: Math.PI,
+      hp: r.hp, maxHp: r.maxHp,
+      shields: 0, maxShields: 0,
+      fire: r.atk, def: r.def,
+      speed: prof.speed * 0.9, range: prof.range,
+      cdMax: prof.cd * 1.15, cd: rand(0.4, 0.1), projSpeed: prof.projSpeed,
+      radius: prof.radius, sfx: prof.sfx, spread: 1, splash: prof.splash, preferRange: prof.preferRange,
+      dashCd: 0, dashTime: 0, dashVx: 0, dashVy: 0, invuln: 0, hitFlash: 0
+    });
+  });
+
+  if (planet.bombardment > 0) {
+    planet.bombardment = 0;
+  }
+
+  const firstP = combat.units.find(u => u.side === 'P');
+  combat.activeId = firstP ? firstP.id : null;
+  openCombatOverlay(`GROUND ASSAULT // ${defenderSector.name.toUpperCase()}`, `${(combat.theme?.name || planet.name).toUpperCase()} • REAL-TIME // WASD + MOUSE • SHIFT DASH • TAB HOT-SWAP`);
+  combatLog(bombPenalty > 0
+    ? `Orbital strike weakened defenders (-${bombPenalty} HP)! Secure relay points for militia support. AI squads use terrain; artillery holds long range.`
+    : 'Assault underway! Secure relay points for militia support. AI squads use terrain and formations; artillery holds long range.');
+}
+
+function openCombatOverlay(title, sub) {
+  sfx.init();
+  cInput.keys = {};
+  document.getElementById('combat').classList.add('show');
+  document.getElementById('combatTitle').textContent = title;
+  document.getElementById('combatSub').textContent = sub;
+  document.getElementById('btnEndCombat').style.display = 'none';
+  document.getElementById('btnAutoResolve').style.display = '';
+  const touchEl = document.getElementById('combatTouch');
+  if (touchEl) touchEl.classList.add('active');
+  renderCombatRoster();
+  resizeCombatCanvas();
+}
+
+function resizeCombatCanvas() {
+  if (!cCanvas.parentElement) return;
+  cCanvas.width = cCanvas.clientWidth || cCanvas.parentElement.clientWidth;
+  cCanvas.height = cCanvas.clientHeight || (cCanvas.parentElement.clientHeight - 120);
+}
+
+function spawnCombatParticles(x, y, color, count = 8, speed = 130, life = 0.4) {
+  if (!combat) return;
+  for (let i = 0; i < count; i++) {
+    if (combat.particles.length > 160) combat.particles.shift();
+    const a = Math.random() * Math.PI * 2;
+    const sp = speed * rand(1.1, 0.3);
+    combat.particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, color, r: rand(3.5, 1.5), life, maxLife: life });
+  }
+}
+
+function fireCombatUnit(u, ang) {
+  u.aim = ang;
+  u.cd = u.cdMax;
+  sfx.play(u.sfx, u.id === combat.activeId ? 0.85 : 0.35, u.side);
+  u.muzzleFlash = 0.095; u.recoil = 1;
+
+  const count = u.spread || 1;
+  const fan = count > 1 ? 0.24 : 0;
+  for (let i = 0; i < count; i++) {
+    const a = ang + (count > 1 ? ((i / (count - 1)) - 0.5) * fan : 0);
+    let dmg = count > 1 ? Math.max(5, Math.round(u.fire * 0.55)) : u.fire;
+    if (u.side === 'E' && !combat.headless) dmg = Math.max(1, Math.round(dmg * COMBAT_AI_ACCURACY));
+    combat.projectiles.push({
+      x: u.x + Math.cos(a) * (u.radius + 6),
+      y: u.y + Math.sin(a) * (u.radius + 6),
+      vx: Math.cos(a) * u.projSpeed,
+      vy: Math.sin(a) * u.projSpeed,
+      side: u.side,
+      dmg,
+      splash: u.splash || 0,
+      distLeft: u.range * 1.15,
+      color: u.side === 'P' ? '#38bdf8' : '#fb7185',
+      weapon: u.sfx || 'laser', side: u.side, trail: []
+    });
+  }
+}
+
+function damageCombatUnit(target, dmg, splashX, splashY) {
+  if (target.hp <= 0 || target.invuln > 0) return;
+  let actual = dmg;
+  if (combat.kind === 'GROUND' && target.def) {
+    actual = Math.max(3, dmg - Math.floor(target.def * 0.25));
+  }
+  if (target.shields > 0) {
+    const abs = Math.min(target.shields, actual);
+    target.shields -= abs;
+    actual -= abs;
+  }
+  target.hp = Math.max(0, target.hp - actual);
+  target.hitFlash = 0.18;
+  target.impactPulse = 0.22;
+  if (combat.kind === 'NAVAL') {
+    target.ship.hp = target.hp;
+    target.ship.shields = target.shields;
+  } else {
+    target.reg.hp = target.hp;
+  }
+  sfx.play('hit', 0.5, target.side);
+  const impactX = splashX ?? target.x, impactY = splashY ?? target.y;
+  const impactColor = target.side === 'P' ? '#38bdf8' : '#fb7185';
+  spawnCombatParticles(impactX, impactY, impactColor, combat.kind === 'NAVAL' ? 10 : 7, combat.kind === 'NAVAL' ? 155 : 115, 0.34);
+  if (actual > 12) spawnCombatParticles(impactX, impactY, '#fbbf24', 4, 95, 0.22);
+
+  if (target.hp <= 0) {
+    sfx.play('explode', 0.85, target.side);
+    if (combat.shockwaves) combat.shockwaves.push({x:target.x,y:target.y,r:5,maxR:combat.kind==='NAVAL'?target.radius*4.8:target.radius*3.2,life:.48,maxLife:.48,color:target.side==='P'?'#7dd3fc':'#fda4af'});
+    const wreckLife = combat.kind === 'NAVAL' ? 9.5 : 2.4;
+    if (combat.kind === 'NAVAL' && combat.wrecks) combat.wrecks.push({x:target.x,y:target.y,angle:target.aim||0,r:target.radius*1.15,side:target.side,life:wreckLife,maxLife:wreckLife,spin:(Math.random()-.5)*0.55,vx:(Math.random()-.5)*24,vy:(Math.random()-.5)*24});
+    spawnCombatParticles(target.x, target.y, '#fbbf24', combat.kind === 'NAVAL' ? 34 : 22, combat.kind === 'NAVAL' ? 275 : 210, combat.kind === 'NAVAL' ? 1.0 : 0.62);
+    spawnCombatParticles(target.x, target.y, target.side === 'P' ? '#38bdf8' : '#fb7185', 18, 175, 0.72);
+    if (combat.kind === 'NAVAL') spawnCombatParticles(target.x, target.y, '#cbd5e1', 15, 95, 1.35);
+    const nm = combat.kind === 'NAVAL' ? target.ship.name : target.reg.name;
+    combatLog(`${nm} destroyed!`);
+    if (target.id === combat.activeId) {
+      const next = combat.units.find(u => u.side === 'P' && u.hp > 0);
+      if (next) {
+        combat.activeId = next.id;
+        combatLog(`Command transferred to ${combat.kind === 'NAVAL' ? next.ship.name : next.reg.name}!`);
+      }
+    }
+    renderCombatRoster();
+  }
+}
+
+function triggerCombatDash(u) {
+  if (!u || u.hp <= 0 || u.dashCd > 0) return;
+  let dx = u.vx, dy = u.vy;
+  if (Math.hypot(dx, dy) < 10) {
+    dx = Math.cos(u.aim);
+    dy = Math.sin(u.aim);
+  } else {
+    const l = Math.hypot(dx, dy);
+    dx /= l; dy /= l;
+  }
+  u.dashCd = COMBAT_PLAYER_DASH_CD;
+  u.dashTime = 0.18;
+  u.invuln = 0.22;
+  u.dashVx = dx * 520;
+  u.dashVy = dy * 520;
+  sfx.play('dash', 0.8);
+  spawnCombatParticles(u.x, u.y, '#c084fc', 10, 120, 0.3);
+}
+
+const MAX_ACTIVE_OBJECTIVE_REINFORCEMENTS_PER_SIDE = 4;
+
+function spawnObjectiveReinforcement(obj, side) {
+  if (!combat || combat.headless) return;
+  const activeReinforcements = combat.units.filter(u => u.side === side && u.reinforcement && u.hp > 0 && !u.fled).length;
+  if (activeReinforcements >= MAX_ACTIVE_OBJECTIVE_REINFORCEMENTS_PER_SIDE) return;
+  // Do not allow a captured relay to resurrect a force after its opponent is eliminated.
+  const opposingSide = side === 'P' ? 'E' : 'P';
+  if (!combat.units.some(u => u.side === opposingSide && u.hp > 0 && !u.fled)) return;
+  const id = uid('relay');
+  const angle = Math.random() * Math.PI * 2;
+  const x = clamp(obj.x + Math.cos(angle) * (obj.r + 24), 35, ARENA_W - 35);
+  const y = clamp(obj.y + Math.sin(angle) * (obj.r + 24), 35, ARENA_H - 35);
+  if (combat.kind === 'NAVAL') {
+    const ship = { id, type: 'FIGHTER', name: side === 'P' ? 'Relay Patrol Fighter' : 'Hegemony Patrol Fighter', hp: 48, maxHp: 48, shields: 0, maxShields: 0, fire: 5, cargo: [] };
+    const pr = shipCombatProfile('FIGHTER');
+    combat.units.push({ id, side, ship, reinforcement: true, x, y, vx: 0, vy: 0, aim: side === 'P' ? 0 : Math.PI, hp: 48, maxHp: 48, shields: 0, maxShields: 0, fire: 5, speed: pr.speed * 0.9, range: pr.range * 0.8, cdMax: pr.cd * 1.35, cd: 0.4, projSpeed: pr.projSpeed, radius: 11, sfx: pr.sfx, spread: 1, splash: 0, preferRange: pr.preferRange, dashCd: 0, dashTime: 0, dashVx: 0, dashVy: 0, invuln: 0, hitFlash: 0 });
+  } else {
+    const reg = { id, type: 'INFANTRY', name: side === 'P' ? 'Relay Militia' : 'Garrison Militia', owner: side, hp: 38, maxHp: 38, atk: 5, def: 4, range: 180 };
+    const pr = regCombatProfile('INFANTRY');
+    combat.units.push({ id, side, reg, reinforcement: true, x, y, vx: 0, vy: 0, aim: side === 'P' ? 0 : Math.PI, hp: 38, maxHp: 38, shields: 0, maxShields: 0, fire: 5, def: 4, speed: pr.speed * 0.82, range: 175, cdMax: pr.cd * 1.4, cd: 0.5, projSpeed: pr.projSpeed, radius: 11, sfx: pr.sfx, spread: 1, splash: 0, preferRange: pr.preferRange, dashCd: 0, dashTime: 0, dashVx: 0, dashVy: 0, invuln: 0, hitFlash: 0 });
+  }
+  combatLog(`${side === 'P' ? 'Friendly' : 'Enemy'} relay sent a light reinforcement unit.`);
+  if (side === 'P') renderCombatRoster();
+}
+
+// Ground tactical helpers: use terrain as real line-of-fire cover and maintain
+// sensible weapon spacing without interfering with direct player control.
+function groundCoverPosition(unit, foe) {
+  if (!combat || combat.kind !== 'GROUND' || !foe) return null;
+  let best = null;
+  for (const obstacle of combat.obstacles) {
+    if (obstacle.hp <= 0) continue;
+    const awayX = obstacle.x - foe.x;
+    const awayY = obstacle.y - foe.y;
+    const len = Math.hypot(awayX, awayY) || 1;
+    const x = clamp(obstacle.x + awayX / len * (obstacle.r + unit.radius + 24), 35, ARENA_W - 35);
+    const y = clamp(obstacle.y + awayY / len * (obstacle.r + unit.radius + 24), 35, ARENA_H - 35);
+    const travel = Math.hypot(x - unit.x, y - unit.y);
+    const foeDistance = Math.hypot(x - foe.x, y - foe.y);
+    if (travel > 330 || foeDistance < obstacle.r + unit.radius + 12) continue;
+    const blockedByOther = combat.obstacles.some(other => other !== obstacle && other.hp > 0 &&
+      Math.hypot(x - other.x, y - other.y) < other.r + unit.radius + 8);
+    if (blockedByOther) continue;
+    // Favor reachable cover that places the obstacle between the unit and threat.
+    const score = travel - Math.min(foeDistance, 500) * 0.08;
+    if (!best || score < best.score) best = { x, y, score };
+  }
+  return best;
+}
+
+function groundFormationOffset(index, total, type, targetX, targetY) {
+  const angle = Math.atan2(targetY - ARENA_H * 0.5, targetX - ARENA_W * 0.5);
+  const spacing = type === 'FLANK' ? 72 : 48;
+  const side = (index - (total - 1) / 2) * spacing;
+  const forward = type === 'FLANK' ? ((index % 2) ? 58 : -58) : 0;
+  return {
+    x: Math.cos(angle) * forward - Math.sin(angle) * side,
+    y: Math.sin(angle) * forward + Math.cos(angle) * side
+  };
+}
+
+function updateCombat(dt) {
+  if (!combat || combat.winner) return;
+  combat.elapsed += dt;
+
+  const active = combat.units.find(u => u.id === combat.activeId && u.hp > 0 && !u.fled);
+  if (combat.camSnapTimer > 0) {
+    combat.camSnapTimer = Math.max(0, combat.camSnapTimer - dt);
+  } else if (active) {
+    combat.camX += (active.x - combat.camX) * Math.min(1, dt * 8);
+    combat.camY += (active.y - combat.camY) * Math.min(1, dt * 8);
+  }
+
+  const pLivingCount = combat.units.filter(x => x.side === 'P' && x.hp > 0 && !x.fled).length;
+  const eLivingCount = combat.units.filter(x => x.side === 'E' && x.hp > 0 && !x.fled).length;
+
+  // 1. Update units (Active player unit + AI wingmen + Enemy AI)
+  for (const u of combat.units) {
+    if (u.hp <= 0 || u.fled) continue;
+    u.cd = Math.max(0, u.cd - dt);
+    u.dashCd = Math.max(0, u.dashCd - dt);
+    u.invuln = Math.max(0, u.invuln - dt);
+    u.hitFlash = Math.max(0, u.hitFlash - dt);
+    u.rallyFlash = Math.max(0, (u.rallyFlash || 0) - dt);
+    u.muzzleFlash = Math.max(0, (u.muzzleFlash || 0) - dt);
+    u.recoil = Math.max(0, (u.recoil || 0) - dt * 7);
+    u.impactPulse = Math.max(0, (u.impactPulse || 0) - dt);
+
+    // Environmental danger zones are readable, avoidable hazards rather than hidden RNG damage.
+    if (combat.kind === 'GROUND' && (u.terrainHitCd || 0) > 0) u.terrainHitCd = Math.max(0, u.terrainHitCd - dt);
+    if (combat.kind === 'GROUND' && !u.invuln && (u.terrainHitCd || 0) <= 0) {
+      const hazard = (combat.decorations || []).find(d => d.hazardous && Math.hypot(u.x - d.x, u.y - d.y) < d.hazardRadius + (u.radius || 10));
+      if (hazard) {
+        u.hp = Math.max(0, u.hp - hazard.hazardDamage);
+        u._lastHp = u.hp;
+        u.hitFlash = Math.max(u.hitFlash || 0, 0.18);
+        u.terrainHitCd = 0.85;
+        if (combat.kind === 'GROUND' && u.reg) u.reg.hp = u.hp;
+      }
+    }
+
+    if (u._lastHp == null) u._lastHp = u.hp;
+    if (u.hp < u._lastHp) u.noDmgTime = 0;
+    else u.noDmgTime = (u.noDmgTime || 0) + dt;
+    u._lastHp = u.hp;
+
+    const mySideCount = u.side === 'P' ? pLivingCount : eLivingCount;
+    const foeSideCount = u.side === 'P' ? eLivingCount : pLivingCount;
+    const uName = combat.kind === 'NAVAL' ? u.ship.name : u.reg.name;
+    if (!u.routing && (u.hp / u.maxHp) < COMBAT_ROUT_THRESHOLD && mySideCount < foeSideCount) {
+      u.routing = true;
+      u.noDmgTime = 0;
+      combatLog(`${uName} routed!`);
+    }
+    if (u.routing && u.noDmgTime >= 3.0) {
+      u.routing = false;
+      u.hp = Math.max(u.hp, Math.round(u.maxHp * 0.25));
+      u._lastHp = u.hp;
+      if (combat.kind === 'NAVAL') u.ship.hp = u.hp;
+      else u.reg.hp = u.hp;
+      u.rallyFlash = 0.28;
+      combatLog(`${uName} rallied!`);
+    }
+
+    if (u.routing) {
+      const foes = combat.units.filter(o => o.side !== u.side && o.hp > 0 && !o.fled);
+      let nearestFoe = null, foeDist = Infinity;
+      for (const f of foes) {
+        const d = Math.hypot(f.x - u.x, f.y - u.y);
+        if (d < foeDist) { foeDist = d; nearestFoe = f; }
+      }
+      const edgeX = u.side === 'P' ? 12 : ARENA_W - 12;
+      let rx = edgeX - u.x, ry = 0;
+      if (nearestFoe) {
+        rx = rx * 0.65 + (u.x - nearestFoe.x) * 0.35;
+        ry = (u.y - nearestFoe.y) * 0.35;
+      }
+      const ra = Math.atan2(ry, rx);
+      u.aim = ra;
+      u.vx = Math.cos(ra) * u.speed * 1.35;
+      u.vy = Math.sin(ra) * u.speed * 1.35;
+    } else if (u.id === combat.activeId) {
+      // Player twin-stick control
+      if (u.dashTime > 0) {
+        u.dashTime -= dt;
+        u.vx = u.dashVx;
+        u.vy = u.dashVy;
+      } else {
+        let mx = (cInput.keys['KeyD'] || cInput.keys['ArrowRight'] ? 1 : 0) - (cInput.keys['KeyA'] || cInput.keys['ArrowLeft'] ? 1 : 0);
+        let my = (cInput.keys['KeyS'] || cInput.keys['ArrowDown'] ? 1 : 0) - (cInput.keys['KeyW'] || cInput.keys['ArrowUp'] ? 1 : 0);
+        if (mx === 0 && my === 0 && (Math.abs(cInput.joyMoveX) > 0.08 || Math.abs(cInput.joyMoveY) > 0.08)) {
+          mx = cInput.joyMoveX;
+          my = cInput.joyMoveY;
+        }
+        const mLen = Math.hypot(mx, my);
+        if (mLen > 0.05) {
+          const scale = Math.min(1, mLen);
+          u.vx = (mx / mLen) * u.speed * scale;
+          u.vy = (my / mLen) * u.speed * scale;
+        } else {
+          u.vx *= 0.78;
+          u.vy *= 0.78;
+        }
+      }
+
+      if (cInput.joyAimActive && Math.hypot(cInput.joyAimX, cInput.joyAimY) > 0.15) {
+        u.aim = Math.atan2(cInput.joyAimY, cInput.joyAimX);
+        if (u.cd <= 0) fireCombatUnit(u, u.aim);
+      } else {
+        const wPt = combatScreenToWorld(cInput.mouseX, cInput.mouseY);
+        u.aim = Math.atan2(wPt.y - u.y, wPt.x - u.x);
+        if (cInput.mouseDown && u.cd <= 0) fireCombatUnit(u, u.aim);
+      }
+    } else {
+      // Autonomous AI for Wingmen & Enemies
+      const foes = combat.units.filter(o => o.side !== u.side && o.hp > 0);
+      let nearestFoe = null, foeDist = Infinity;
+      for (const f of foes) {
+        const d = Math.hypot(f.x - u.x, f.y - u.y);
+        if (d < foeDist) { foeDist = d; nearestFoe = f; }
+      }
+
+      const ord = (combat.kind === 'GROUND' && u.side === 'P' && combat.orders) ? combat.orders[u.id] : null;
+      const uncappedObj = combat.objectives.find(o => o.owner !== u.side);
+      let tx = u.x, ty = u.y;
+      if (ord) {
+        const tgtUnit = ord.targetUnitId ? combat.units.find(x => x.id === ord.targetUnitId && x.hp > 0 && !x.fled) : null;
+        if (tgtUnit) { ord.targetX = tgtUnit.x; ord.targetY = tgtUnit.y; }
+        else if (ord.targetUnitId) { ord.type = 'HOLD'; ord.targetUnitId = null; }
+        const od = Math.hypot(ord.targetX - u.x, ord.targetY - u.y);
+        if (ord.type === 'FLANK' && od <= 40) ord.type = 'HOLD';
+        if (ord.type === 'ADVANCE') {
+          tx = ord.targetX; ty = ord.targetY;
+        } else if (ord.type === 'HOLD') {
+          if (od > 60) { tx = ord.targetX; ty = ord.targetY; }
+        } else {
+          tx = ord.targetX; ty = ord.targetY;
+        }
+        if (nearestFoe) {
+          u.aim = Math.atan2(nearestFoe.y - u.y, nearestFoe.x - u.x);
+          if (foeDist <= u.range && u.cd <= 0) fireCombatUnit(u, u.aim);
+        } else {
+          u.aim = Math.atan2(ty - u.y, tx - u.x);
+        }
+      } else if (nearestFoe && (foeDist < u.range * 1.15 || !uncappedObj)) {
+        const ang = Math.atan2(nearestFoe.y - u.y, nearestFoe.x - u.x);
+        u.aim = ang;
+        const closeTo = u.range * (u.preferRange || 0.72);
+        const backOff = closeTo * 0.5;
+        if (foeDist > closeTo) {
+          tx = nearestFoe.x; ty = nearestFoe.y;
+        } else if (foeDist < backOff) {
+          tx = u.x - Math.cos(ang) * 80; ty = u.y - Math.sin(ang) * 80;
+        }
+        if (foeDist <= u.range && u.cd <= 0) {
+          fireCombatUnit(u, ang);
+        }
+      } else if (uncappedObj) {
+        tx = uncappedObj.x; ty = uncappedObj.y;
+        u.aim = Math.atan2(ty - u.y, tx - u.x);
+      }
+
+      // Tactical doctrine: artillery maintains a long firing lane; mobile
+      // infantry/skirmishers try to occupy nearby terrain that masks incoming fire.
+      if (combat.kind === 'GROUND' && nearestFoe && !ord) {
+        const isArtillery = u.reg && u.reg.type === 'ARTILLERY';
+        if (isArtillery) {
+          const desired = u.range * 0.78;
+          if (foeDist < u.range * 0.66 || foeDist > u.range * 0.88) {
+            const dx = u.x - nearestFoe.x, dy = u.y - nearestFoe.y;
+            const len = Math.hypot(dx, dy) || 1;
+            tx = nearestFoe.x + dx / len * desired;
+            ty = nearestFoe.y + dy / len * desired;
+          }
+          // Prefer a clear firing lane and avoid charging objectives while under threat.
+          u.aim = Math.atan2(nearestFoe.y - u.y, nearestFoe.x - u.x);
+        } else if (foeDist < u.range * 1.2) {
+          const cover = groundCoverPosition(u, nearestFoe);
+          if (cover && Math.hypot(cover.x - u.x, cover.y - u.y) < Math.hypot(tx - u.x, ty - u.y) + 90) {
+            tx = cover.x; ty = cover.y;
+          }
+        }
+      }
+
+      const dGoal = Math.hypot(tx - u.x, ty - u.y);
+      if (dGoal > 18) {
+        const ga = Math.atan2(ty - u.y, tx - u.x);
+        const moveScale = combat.kind === 'GROUND' && u.reg && u.reg.type === 'ARTILLERY' ? 0.68 : 0.82;
+        u.vx = Math.cos(ga) * u.speed * moveScale;
+        u.vy = Math.sin(ga) * u.speed * moveScale;
+      } else {
+        u.vx *= 0.8;
+        u.vy *= 0.8;
+      }
+    }
+
+    u.x = u.x + u.vx * dt;
+    u.y = clamp(u.y + u.vy * dt, u.radius + 16, ARENA_H - u.radius - 16);
+    if (u.routing && ((u.side === 'P' && u.x <= u.radius + 20) || (u.side === 'E' && u.x >= ARENA_W - u.radius - 20))) {
+      u.fled = true;
+      u.routing = false;
+      const nm = combat.kind === 'NAVAL' ? u.ship.name : u.reg.name;
+      combatLog(`${nm} fled the field`);
+      if (u.id === combat.activeId) {
+        const next = combat.units.find(x => x.side === 'P' && x.hp > 0 && !x.fled);
+        combat.activeId = next ? next.id : null;
+      }
+      renderCombatRoster();
+      continue;
+    }
+    u.x = clamp(u.x, u.radius + 16, ARENA_W - u.radius - 16);
+
+    // Obstacle collision
+    for (const o of combat.obstacles) {
+      if (o.hp <= 0) continue;
+      const d = Math.hypot(u.x - o.x, u.y - o.y);
+      const minD = u.radius + o.r;
+      if (d < minD && d > 0.01) {
+        u.x = o.x + ((u.x - o.x) / d) * minD;
+        u.y = o.y + ((u.y - o.y) / d) * minD;
+      }
+    }
+    // Soft unit separation
+    for (const other of combat.units) {
+      if (other.id === u.id || other.hp <= 0) continue;
+      const d = Math.hypot(u.x - other.x, u.y - other.y);
+      const minD = u.radius + other.radius + 4;
+      if (d < minD && d > 0.01) {
+        u.x += ((u.x - other.x) / d) * (minD - d) * 0.35;
+        u.y += ((u.y - other.y) / d) * (minD - d) * 0.35;
+      }
+    }
+  }
+
+  // 2. Update projectiles
+  for (const p of combat.projectiles) {
+    const step = Math.hypot(p.vx, p.vy) * dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    if (p.trail) { p.trail.push({x:p.x,y:p.y}); if (p.trail.length > 5) p.trail.shift(); }
+    p.distLeft -= step;
+    if (p.x < 0 || p.x > ARENA_W || p.y < 0 || p.y > ARENA_H) { p.distLeft = 0; continue; }
+
+    for (const o of combat.obstacles) {
+      if (o.hp <= 0) continue;
+      if (Math.hypot(p.x - o.x, p.y - o.y) <= o.r + 3) {
+        if (o.destructible) {
+          o.hp -= p.dmg;
+          if (o.kind === 'ASTEROID') {
+            spawnCombatParticles(p.x, p.y, '#cbd5e1', 7, 105, 0.32);
+            if (o.hp <= 0) { spawnCombatParticles(o.x, o.y, '#94a3b8', 34, 260, 0.9); spawnCombatParticles(o.x,o.y,'#fbbf24',12,175,0.42); sfx.play('explode', 0.65); }
+          } else {
+            spawnCombatParticles(p.x, p.y, '#fbbf24', 5, 90, 0.25);
+            if (o.hp <= 0) sfx.play('explode', 0.5);
+          }
+        } else {
+          spawnCombatParticles(p.x, p.y, '#94a3b8', 4, 70, 0.2);
+        }
+        p.distLeft = 0;
+        break;
+      }
+    }
+    if (p.distLeft <= 0) continue;
+
+    for (const u of combat.units) {
+      if (u.hp <= 0 || u.side === p.side) continue;
+      if (Math.hypot(p.x - u.x, p.y - u.y) <= u.radius + 5) {
+        if (p.splash > 0) {
+          for (const su of combat.units) {
+            if (su.hp > 0 && su.side !== p.side && Math.hypot(su.x - p.x, su.y - p.y) <= p.splash + su.radius) {
+              damageCombatUnit(su, p.dmg, p.x, p.y);
+            }
+          }
+          spawnCombatParticles(p.x, p.y, '#fbbf24', 14, 160, 0.4);
+        } else {
+          damageCombatUnit(u, p.dmg, p.x, p.y);
+        }
+        p.distLeft = 0;
+        break;
+      }
+    }
+  }
+  combat.projectiles = combat.projectiles.filter(p => p.distLeft > 0);
+  combat.obstacles = combat.obstacles.filter(o => o.hp > 0);
+
+  // 3. Update Objectives
+  for (const obj of combat.objectives) {
+    const pIn = combat.units.filter(u => u.side === 'P' && u.hp > 0 && Math.hypot(u.x - obj.x, u.y - obj.y) <= obj.r + u.radius).length;
+    const eIn = combat.units.filter(u => u.side === 'E' && u.hp > 0 && Math.hypot(u.x - obj.x, u.y - obj.y) <= obj.r + u.radius).length;
+    if (pIn > 0 && eIn === 0 && obj.owner !== 'P') {
+      obj.prog = Math.min(100, obj.prog + 28 * dt);
+      if (obj.prog >= 100) {
+        obj.owner = 'P';
+        sfx.play('capture');
+        combatLog(`${obj.name} captured!`);
+      }
+    } else if (eIn > 0 && pIn === 0 && obj.owner !== 'E') {
+      obj.prog = Math.max(-100, obj.prog - 22 * dt);
+      if (obj.prog <= -100) {
+        obj.owner = 'E';
+        obj.reinforceTimer = 0;
+        combatLog(`Enemy secured ${obj.name}!`);
+      }
+    }
+    // Each held objective automatically deploys one weak reinforcement every 5 seconds.
+    if (obj.owner === 'P' || obj.owner === 'E') {
+      obj.reinforceTimer = (obj.reinforceTimer || 0) + dt;
+      if (obj.reinforceTimer >= 5) {
+        obj.reinforceTimer -= 5;
+        spawnObjectiveReinforcement(obj, obj.owner);
+      }
+    } else {
+      obj.reinforceTimer = 0;
+    }
+  }
+
+  // 4. Particles, expanding blast fronts and drifting ship wreckage
+  for (const sw of (combat.shockwaves || [])) { sw.life -= dt; sw.r = sw.maxR * (1 - sw.life / sw.maxLife); }
+  combat.shockwaves = (combat.shockwaves || []).filter(sw => sw.life > 0);
+  for (const wr of (combat.wrecks || [])) { wr.x += wr.vx * dt; wr.y += wr.vy * dt; wr.angle += wr.spin * dt; wr.vx *= 0.985; wr.vy *= 0.985; wr.life -= dt; }
+  combat.wrecks = (combat.wrecks || []).filter(wr => wr.life > 0);
+  for (const pt of combat.particles) {
+    pt.x += pt.vx * dt;
+    pt.y += pt.vy * dt;
+    pt.vx *= 0.92;
+    pt.vy *= 0.92;
+    pt.life -= dt;
+  }
+  combat.particles = combat.particles.filter(pt => pt.life > 0);
+
+  // 5. Check Victory / Rout / Objective Capture
+  const pAlive = combat.units.filter(u => u.side === 'P' && u.hp > 0 && !u.fled);
+  const eAlive = combat.units.filter(u => u.side === 'E' && u.hp > 0 && !u.fled);
+  const eFled = combat.units.filter(u => u.side === 'E' && u.fled).length;
+  if (eAlive.length === 0) {
+    endRealTimeCombat('P', eFled > 0 ? 'Hostiles routed' : 'Enemy force wiped out!');
+  } else if (pAlive.length === 0) {
+    endRealTimeCombat('E', 'All friendly units lost or fled.');
+  }
+}
+
+function endRealTimeCombat(winner, reason) {
+  if (!combat || combat.winner) return;
+  combat.winner = winner;
+  combat.endReason = reason;
+  if (combat.headless) return;
+  cInput.keys = {};
+  cInput.mouseDown = false;
+  cInput.joyAimActive = false;
+  combatLog(`${winner === 'P' ? 'VICTORY' : 'DEFEAT'} — ${reason}`);
+  if (combat.kind === 'NAVAL') finishNaval();
+  else finishGround();
+}
+
+function finishNaval() {
+  document.getElementById('btnEndCombat').style.display = '';
+  document.getElementById('btnAutoResolve').style.display = 'none';
+  const pf = G.fleets[combat.player.id];
+  const ef = G.fleets[combat.enemy.id];
+  if (pf) {
+    pf.ships = combat.units.filter(u => u.side === 'P' && u.hp > 0 && !u.reinforcement).map(u => {
+      u.ship.hp = Math.max(1, Math.round(u.hp));
+      u.ship.shields = Math.max(0, Math.round(u.shields));
+      return u.ship;
+    });
+    if (!pf.ships.length) delete G.fleets[pf.id];
+  }
+  if (ef) {
+    if (combat.winner === 'P') {
+      delete G.fleets[ef.id];
+    } else {
+      ef.ships = combat.units.filter(u => u.side === 'E' && u.hp > 0 && !u.reinforcement).map(u => {
+        u.ship.hp = Math.max(1, Math.round(u.hp));
+        u.ship.shields = Math.max(0, Math.round(u.shields));
+        return u.ship;
+      });
+      if (!ef.ships.length) delete G.fleets[ef.id];
+    }
+  }
+  Object.keys(G.fleets).forEach(id => {
+    if (!G.fleets[id].ships || G.fleets[id].ships.length === 0) delete G.fleets[id];
+  });
+  log(combat.winner === 'P' ? `Naval victory! (${combat.endReason})` : `Naval defeat. (${combat.endReason})`);
+}
+
+function finishGround() {
+  document.getElementById('btnEndCombat').style.display = '';
+  document.getElementById('btnAutoResolve').style.display = 'none';
+  const planet = combat.planet;
+  const atk = planet.armies[combat.attackerArmy.id] || combat.attackerArmy;
+  const sec = combat.defenderSector;
+
+  atk.regs = combat.units.filter(u => u.side === 'P' && u.hp > 0 && !u.reinforcement).map(u => {
+    u.reg.hp = Math.max(1, Math.round(u.hp));
+    return u.reg;
+  });
+
+  if (combat.winner === 'P') {
+    if (combat.defenderArmy) delete planet.armies[combat.defenderArmy.id];
+    const oldSec = planet.sectors.find(s => s.armyId === atk.id);
+    if (oldSec) oldSec.armyId = null;
+    sec.owner = 'P';
+    if (atk.regs.length) {
+      planet.armies[atk.id] = atk;
+      sec.armyId = atk.id;
+      atk.sectorId = sec.id;
+    } else {
+      delete planet.armies[atk.id];
+      sec.armyId = null;
+    }
+    const owners = new Set(planet.sectors.map(s => s.owner));
+    planet.orbital = owners.size === 1 ? [...owners][0] : 'C';
+    const found = findPlanet(planet.id);
+    if (found) updateSystemOwner(found.sys);
+    refreshIncome();
+    log(`Captured ${sec.name} on ${planet.name}! (${combat.endReason})`);
+  } else {
+    if (!atk.regs.length) {
+      const oldSec = planet.sectors.find(s => s.armyId === atk.id);
+      if (oldSec) oldSec.armyId = null;
+      delete planet.armies[atk.id];
+    }
+    if (combat.defenderArmy) {
+      combat.defenderArmy.regs = combat.units.filter(u => u.side === 'E' && u.hp > 0 && !u.reinforcement).map(u => {
+        u.reg.hp = Math.max(1, Math.round(u.hp));
+        return u.reg;
+      });
+      if (!combat.defenderArmy.regs.length) {
+        delete planet.armies[combat.defenderArmy.id];
+        sec.armyId = null;
+      }
+    }
+    log(`Assault on ${sec.name} failed.`);
+  }
+  Object.keys(planet.armies).forEach(id => {
+    if (!planet.armies[id].regs || planet.armies[id].regs.length === 0) {
+      const s = planet.sectors.find(sec => sec.armyId === id);
+      if (s) s.armyId = null;
+      delete planet.armies[id];
+    }
+  });
+}
+
+function autoResolveCombat() {
+  sfx.init();
+  if (!combat || combat.winner) return;
+  const kind = combat.kind;
+  const table = COMBAT_MATCHUP[kind] || {};
+  const pUnits = combat.units.filter(u => u.side === 'P' && u.hp > 0 && !u.fled);
+  const eUnits = combat.units.filter(u => u.side === 'E' && u.hp > 0 && !u.fled);
+  const getType = u => kind === 'NAVAL' ? u.ship.type : u.reg.type;
+  const mostCommon = arr => {
+    const counts = {};
+    arr.forEach(u => { const t = getType(u); counts[t] = (counts[t] || 0) + 1; });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
+  };
+  const pMain = mostCommon(pUnits);
+  const eMain = mostCommon(eUnits);
+
+  const sidePower = (arr, foeMain) => arr.reduce((s, u) => {
+    const ut = getType(u);
+    const mult = (table[ut] && foeMain && table[ut][foeMain]) || 1.0;
+    return s + u.fire * mult + u.hp / 6;
+  }, 0);
+
+  let pPow = sidePower(pUnits, eMain);
+  let ePow = sidePower(eUnits, pMain);
+  // Represent the tactical value of controlled relays in auto-resolve without
+  // persisting or manufacturing temporary campaign units.
+  const pObjectives = combat.objectives.filter(o => o.owner === 'P').length;
+  const eObjectives = combat.objectives.filter(o => o.owner === 'E').length;
+  pPow += pObjectives * 7.5;
+  ePow += eObjectives * 7.5;
+
+  const avgRange = arr => arr.length ? arr.reduce((s, u) => s + u.range, 0) / arr.length : 0;
+  const pAvgR = avgRange(pUnits), eAvgR = avgRange(eUnits);
+  if (pAvgR > eAvgR) pPow *= 1.08;
+  else if (eAvgR > pAvgR) ePow *= 1.08;
+
+  let win = pPow >= ePow ? 'P' : 'E';
+  let upset = false;
+  if (Math.random() < 0.05) {
+    win = win === 'P' ? 'E' : 'P';
+    upset = true;
+  }
+
+  const winPow = Math.max(1, win === 'P' ? pPow : ePow);
+  const losePow = Math.max(0, win === 'P' ? ePow : pPow);
+  const ratio = Math.min(0.88, (losePow / winPow) * rand(0.65, 0.35));
+
+  combat.units.forEach(u => {
+    if (u.side === win && u.hp > 0 && !u.fled) {
+      u.hp = Math.max(5, Math.floor(u.hp * (1 - ratio)));
+      u.shields = 0;
+    } else {
+      u.hp = 0;
+      u.shields = 0;
+    }
+  });
+
+  const abbr = { CORVETTE:'CT', CRUISER:'CR', CARRIER:'CV', TRANSPORT:'TR', INFANTRY:'INF', SKIRMISHER:'SKR', MECH:'MECH', ARTILLERY:'ART' };
+  const fmtComp = arr => {
+    const c = {};
+    arr.forEach(u => { const t = getType(u); c[t] = (c[t] || 0) + 1; });
+    return Object.entries(c).map(([t, n]) => `${n}${abbr[t] || t}`).join(' ');
+  };
+  const surv = combat.units.filter(u => u.side === win && u.hp > 0 && !u.fled).length;
+  combatLog(`Auto-resolve: ${fmtComp(pUnits)} (PWR ${Math.round(pPow)}) vs ${fmtComp(eUnits)} (PWR ${Math.round(ePow)}) → ${win} wins with ${surv} survivors${upset ? ' (UPSET!)' : ''}.`);
+  endRealTimeCombat(win, upset ? 'Auto-resolved tactical upset!' : 'Auto-resolved tactical engagement.');
+}
+
+function runHeadless(engagement) {
+  const prevCombat = combat;
+  const kind = engagement.kind || 'NAVAL';
+  const arena = generateCombatArena(kind, null, { fort: 0 });
+  combat = {
+    kind, headless: true,
+    obstacles: arena.obstacles, objectives: arena.objectives,
+    units: [], projectiles: [], particles: [], log: [],
+    winner: null, endReason: '', activeId: null,
+    camX: ARENA_W * 0.5, camY: ARENA_H * 0.5, elapsed: 0
+  };
+  const spawnSide = (types, side) => {
+    types.forEach((t, i) => {
+      const yOff = (i - (types.length - 1) / 2) * (kind === 'NAVAL' ? 76 : 68);
+      if (kind === 'NAVAL') {
+        const s = makeShip(t, side);
+        const prof = shipCombatProfile(t);
+        combat.units.push({
+          id: s.id, side, ship: s,
+          x: side === 'P' ? 190 : ARENA_W - 190,
+          y: clamp(ARENA_H * 0.5 + yOff, 90, ARENA_H - 90),
+          vx: 0, vy: 0, aim: side === 'P' ? 0 : Math.PI,
+          hp: s.hp, maxHp: s.maxHp, shields: s.shields, maxShields: s.maxShields,
+          fire: s.fire, speed: prof.speed, range: prof.range,
+          cdMax: prof.cd, cd: rand(0.2, 0), projSpeed: prof.projSpeed,
+          radius: prof.radius, sfx: prof.sfx, spread: prof.spread, splash: 0, preferRange: prof.preferRange,
+          dashCd: 0, dashTime: 0, dashVx: 0, dashVy: 0, invuln: 0, hitFlash: 0
+        });
+      } else {
+        const r = makeRegiment(t, side);
+        const prof = regCombatProfile(t);
+        combat.units.push({
+          id: r.id, side, reg: r,
+          x: side === 'P' ? 180 : ARENA_W - 200,
+          y: clamp(ARENA_H * 0.5 + yOff, 90, ARENA_H - 90),
+          vx: 0, vy: 0, aim: side === 'P' ? 0 : Math.PI,
+          hp: r.hp, maxHp: r.maxHp, shields: 0, maxShields: 0,
+          fire: r.atk, def: r.def || 10, speed: prof.speed, range: prof.range,
+          cdMax: prof.cd, cd: rand(0.2, 0), projSpeed: prof.projSpeed,
+          radius: prof.radius, sfx: prof.sfx, spread: 1, splash: prof.splash, preferRange: prof.preferRange,
+          dashCd: 0, dashTime: 0, dashVx: 0, dashVy: 0, invuln: 0, hitFlash: 0
+        });
+      }
+    });
+  };
+  spawnSide(engagement.p || [], 'P');
+  spawnSide(engagement.e || [], 'E');
+  const dt = 1 / 30;
+  for (let step = 0; step < 3600 && !combat.winner; step++) {
+    updateCombat(dt);
+  }
+  if (!combat.winner) {
+    const pHp = combat.units.filter(u => u.side === 'P' && u.hp > 0 && !u.fled).reduce((s, u) => s + u.hp, 0);
+    const eHp = combat.units.filter(u => u.side === 'E' && u.hp > 0 && !u.fled).reduce((s, u) => s + u.hp, 0);
+    combat.winner = pHp >= eHp ? 'P' : 'E';
+  }
+  const result = { winner: combat.winner, elapsed: combat.elapsed, reason: combat.endReason };
+  combat = prevCombat;
+  return result;
+}
+
+function runBalanceTests() {
+  const cases = [
+    { name: 'A. 1 CRUISER vs 1 CRUISER', expected: 0.50, eng: { kind: 'NAVAL', p: ['CRUISER'], e: ['CRUISER'] } },
+    { name: 'B. 2 CORVETTES vs 1 CRUISER', expected: 0.40, eng: { kind: 'NAVAL', p: ['CORVETTE', 'CORVETTE'], e: ['CRUISER'] } },
+    { name: 'C. 1 CARRIER vs 1 CRUISER', expected: 0.55, eng: { kind: 'NAVAL', p: ['CARRIER'], e: ['CRUISER'] } },
+    { name: 'D. 3 CORVETTES vs 2 CORVETTES', expected: 0.70, eng: { kind: 'NAVAL', p: ['CORVETTE', 'CORVETTE', 'CORVETTE'], e: ['CORVETTE', 'CORVETTE'] } },
+    { name: 'E. 4 INFANTRY vs 2 MECH', expected: 0.50, eng: { kind: 'GROUND', p: ['INFANTRY', 'INFANTRY', 'INFANTRY', 'INFANTRY'], e: ['MECH', 'MECH'] } },
+    { name: 'F. 2 ARTILLERY vs 3 INFANTRY', expected: 0.40, eng: { kind: 'GROUND', p: ['ARTILLERY', 'ARTILLERY'], e: ['INFANTRY', 'INFANTRY', 'INFANTRY'] } },
+    { name: 'G. 6 SKIRMISHERS vs 2 MECH + 2 INFANTRY', expected: 0.55, eng: { kind: 'GROUND', p: ['SKIRMISHER', 'SKIRMISHER', 'SKIRMISHER', 'SKIRMISHER', 'SKIRMISHER', 'SKIRMISHER'], e: ['MECH', 'MECH', 'INFANTRY', 'INFANTRY'] } }
+  ];
+  const results = cases.map(c => {
+    let wins = 0, totalTime = 0;
+    for (let i = 0; i < 20; i++) {
+      const r = runHeadless(c.eng);
+      if (r.winner === 'P') wins++;
+      totalTime += r.elapsed;
+    }
+    const actual = Number((wins / 20).toFixed(2));
+    return {
+      name: c.name,
+      expected: c.expected,
+      actual,
+      delta: Number((actual - c.expected).toFixed(2)),
+      avgDuration: Number((totalTime / 20).toFixed(2))
+    };
+  });
+  console.table(results);
+  return results;
+}
+
+function combatCamTransform() {
+  const w = cCanvas.width, h = cCanvas.height;
+  const zoom = Math.min(w / 920, h / 600, 1.15);
+  const cx = clamp(combat.camX, (w / 2) / zoom, ARENA_W - (w / 2) / zoom);
+  const cy = clamp(combat.camY, (h / 2) / zoom, ARENA_H - (h / 2) / zoom);
+  return {
+    w, h, zoom,
+    cx: ARENA_W < w / zoom ? ARENA_W / 2 : cx,
+    cy: ARENA_H < h / zoom ? ARENA_H / 2 : cy
+  };
+}
+
+function combatScreenToWorld(sx, sy) {
+  const cam = combatCamTransform();
+  return {
+    x: cam.cx + (sx - cam.w / 2) / cam.zoom,
+    y: cam.cy + (sy - cam.h / 2) / cam.zoom
+  };
+}
+
+// ============================================================================
+// SCI-FI UNIT SPRITES — layered vector silhouettes, faction lighting and details
+// ============================================================================
+function spriteFaction(side) {
+  return side === 'P'
+    ? { glow:'#38d9ff', trim:'#9beeff', dark:'#12344a', hull:'#315b73' }
+    : { glow:'#ff536f', trim:'#ffb0bd', dark:'#491b2b', hull:'#743044' };
+}
+
+function spritePolygon(ctx, pts, fill, stroke='#07111f', line=1.5) {
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+  for (let i=1;i<pts.length;i++) ctx.lineTo(pts[i][0],pts[i][1]);
+  ctx.closePath(); ctx.fillStyle=fill; ctx.fill();
+  ctx.lineWidth=line; ctx.strokeStyle=stroke; ctx.stroke();
+}
+
+function spriteDetailLine(ctx, x1, y1, x2, y2, color, width=1, alpha=1) {
+  ctx.save(); ctx.globalAlpha=alpha; ctx.strokeStyle=color; ctx.lineWidth=width;
+  ctx.lineCap='square'; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore();
+}
+function spriteRivet(ctx, x, y, radius, color) {
+  ctx.save(); ctx.fillStyle='#07111a'; ctx.beginPath(); ctx.arc(x,y,radius*1.7,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x-radius*.2,y-radius*.2,radius,0,Math.PI*2); ctx.fill(); ctx.restore();
+}
+function spriteVent(ctx, x, y, w, h, color, count=3) {
+  ctx.save(); ctx.fillStyle='rgba(3,10,18,.78)'; ctx.fillRect(x,y,w,h);
+  ctx.strokeStyle=color; ctx.lineWidth=Math.max(.65,h*.12);
+  for(let i=1;i<=count;i++){const xx=x+w*i/(count+1);ctx.beginPath();ctx.moveTo(xx,y+h*.18);ctx.lineTo(xx,y+h*.82);ctx.stroke();}
+  ctx.restore();
+}
+function spriteArmorPanel(ctx, pts, fill, edge) {
+  spritePolygon(ctx,pts,fill,'rgba(4,12,22,.9)',.9);
+  ctx.save(); ctx.strokeStyle=edge; ctx.globalAlpha=.58; ctx.lineWidth=.8;
+  ctx.beginPath(); ctx.moveTo(pts[0][0]*.88+pts[1][0]*.12,pts[0][1]*.88+pts[1][1]*.12);
+  ctx.lineTo(pts[1][0]*.72+pts[2][0]*.28,pts[1][1]*.72+pts[2][1]*.28); ctx.stroke(); ctx.restore();
+}
+
+function drawNavalSprite(ctx, u, col) {
+  const f=spriteFaction(u.side), r=u.radius, type=u.ship?.type || 'CORVETTE';
+  ctx.save();
+  // Twin ion exhausts and an illuminated engine wake.
+  ctx.shadowColor=f.glow; ctx.shadowBlur=11;
+  ctx.fillStyle=f.glow; ctx.globalAlpha=.72;
+  for (const yy of [-r*.34,r*.34]) {
+    ctx.beginPath(); ctx.moveTo(-r*.72,yy-r*.12); ctx.lineTo(-r*1.48,yy-r*.22);
+    ctx.lineTo(-r*1.48,yy+r*.22); ctx.lineTo(-r*.72,yy+r*.12); ctx.closePath(); ctx.fill();
+  }
+  ctx.globalAlpha=1; ctx.shadowBlur=0;
+  if(type==='CARRIER') {
+    spritePolygon(ctx,[[-r*1.12,-r*.52],[-r*.48,-r*.9],[r*.88,-r*.72],[r*1.25,0],[r*.88,r*.72],[-r*.48,r*.9],[-r*1.12,r*.52]],f.dark);
+    spritePolygon(ctx,[[-r*.68,-r*.57],[r*.72,-r*.48],[r*1.02,0],[r*.72,r*.48],[-r*.68,r*.57]],f.hull);
+    ctx.fillStyle='#091827'; ctx.fillRect(-r*.55,-r*.27,r*1.45,r*.54);
+    ctx.strokeStyle=f.trim; ctx.lineWidth=1.2; ctx.strokeRect(-r*.55,-r*.27,r*1.45,r*.54);
+    for(let i=0;i<4;i++){ctx.fillStyle=f.glow;ctx.fillRect(-r*.38+i*r*.34,-r*.16,r*.18,r*.32);}
+    // Command bridge and flight-deck runway.
+    spritePolygon(ctx,[[-r*.18,-r*.25],[r*.28,-r*.25],[r*.48,0],[r*.28,r*.25],[-r*.18,r*.25]],'#a8d5e5');
+    ctx.strokeStyle=f.glow;ctx.beginPath();ctx.moveTo(-r*.42,0);ctx.lineTo(r*.82,0);ctx.stroke();
+  } else if(type==='CRUISER') {
+    spritePolygon(ctx,[[-r*1.12,-r*.58],[-r*.38,-r*.92],[r*.88,-r*.66],[r*1.28,0],[r*.88,r*.66],[-r*.38,r*.92],[-r*1.12,r*.58]],f.dark);
+    spritePolygon(ctx,[[-r*.82,-r*.48],[r*.72,-r*.5],[r*1.08,0],[r*.72,r*.5],[-r*.82,r*.48],[-r*.5,0]],f.hull);
+    spritePolygon(ctx,[[-r*.2,-r*.62],[r*.48,-r*.42],[r*.72,0],[r*.48,r*.42],[-r*.2,r*.62],[-r*.42,0]],'#7f9eaf');
+    for(const yy of [-r*.66,r*.66]){ctx.fillStyle=f.trim;ctx.fillRect(-r*.1,yy-r*.08,r*.72,r*.16);}
+    ctx.fillStyle=f.glow;ctx.fillRect(r*.58,-r*.09,r*.48,r*.18);
+  } else if(type==='TRANSPORT') {
+    spritePolygon(ctx,[[-r*1.05,-r*.62],[-r*.52,-r*.82],[r*.86,-r*.58],[r*1.12,0],[r*.86,r*.58],[-r*.52,r*.82],[-r*1.05,r*.62]],f.dark);
+    spritePolygon(ctx,[[-r*.78,-r*.5],[r*.7,-r*.44],[r*.96,0],[r*.7,r*.44],[-r*.78,r*.5]],f.hull);
+    ctx.fillStyle='#0b1c2a';ctx.fillRect(-r*.38,-r*.29,r*.92,r*.58);
+    ctx.strokeStyle=f.trim;ctx.lineWidth=1;ctx.strokeRect(-r*.38,-r*.29,r*.92,r*.58);
+    for(let i=0;i<3;i++){ctx.fillStyle=f.glow;ctx.fillRect(-r*.22+i*r*.25,-r*.12,r*.1,r*.24);}
+  } else {
+    spritePolygon(ctx,[[-r*1.05,-r*.55],[-r*.25,-r*.92],[r*.72,-r*.62],[r*1.22,0],[r*.72,r*.62],[-r*.25,r*.92],[-r*1.05,r*.55],[-r*.62,0]],f.dark);
+    spritePolygon(ctx,[[-r*.7,-r*.42],[r*.58,-r*.43],[r*1.02,0],[r*.58,r*.43],[-r*.7,r*.42],[-r*.38,0]],f.hull);
+    for(const yy of [-r*.56,r*.56]){ctx.fillStyle='#101f30';ctx.fillRect(-r*.25,yy-r*.13,r*.58,r*.26);ctx.fillStyle=f.trim;ctx.fillRect(-r*.05,yy-r*.06,r*.25,r*.12);}
+    ctx.fillStyle=f.glow;ctx.fillRect(r*.48,-r*.1,r*.46,r*.2);
+  }
+  // Retro hard-surface detailing: layered armor plates, inset vents, bolts and warning marks.
+  ctx.save();
+  spriteDetailLine(ctx,-r*.62,-r*.34,r*.48,-r*.34,'#b8d4df',Math.max(.7,r*.035),.52);
+  spriteDetailLine(ctx,-r*.62,r*.34,r*.48,r*.34,'#b8d4df',Math.max(.7,r*.035),.52);
+  spriteDetailLine(ctx,-r*.34,-r*.4,-r*.12,-r*.18,f.trim,Math.max(.7,r*.035),.8);
+  spriteDetailLine(ctx,-r*.34,r*.4,-r*.12,r*.18,f.trim,Math.max(.7,r*.035),.8);
+  spriteVent(ctx,-r*.48,-r*.12,r*.3,r*.24,'#91aab8',3);
+  spriteVent(ctx,r*.58,-r*.23,r*.22,r*.12,f.trim,2);
+  spriteVent(ctx,r*.58,r*.11,r*.22,r*.12,f.trim,2);
+  for(const yy of [-r*.48,r*.48]) for(const xx of [-r*.62,-r*.18,r*.3]) spriteRivet(ctx,xx,yy,Math.max(.65,r*.025),f.trim);
+  // Raised dorsal armor and a chunky retro sensor mast.
+  spriteArmorPanel(ctx,[[-r*.12,-r*.2],[r*.18,-r*.27],[r*.42,-r*.12],[r*.22,-r*.06]],'#8da5b1',f.trim);
+  ctx.strokeStyle=f.trim;ctx.lineWidth=Math.max(.8,r*.035);ctx.beginPath();ctx.moveTo(-r*.42,0);ctx.lineTo(-r*.55,-r*.18);ctx.lineTo(-r*.55,-r*.34);ctx.stroke();
+  ctx.fillStyle=f.glow;ctx.fillRect(-r*.59,-r*.39,r*.08,r*.08);
+  // Small yellow hazard bands evoke classic painted sci-fi miniatures.
+  ctx.fillStyle='#d5b65a';ctx.globalAlpha=.9;
+  for(let i=0;i<3;i++)ctx.fillRect(r*.78+i*r*.055,-r*.055,r*.028,r*.11);
+  ctx.restore();
+  // Cockpit / sensor jewel, armor seams and weapon hardpoints.
+  ctx.shadowColor=f.glow;ctx.shadowBlur=7;ctx.fillStyle=f.glow;
+  ctx.beginPath();ctx.ellipse(r*.24,0,r*.19,r*.12,0,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+  ctx.strokeStyle='rgba(220,245,255,.58)';ctx.lineWidth=.8;
+  ctx.beginPath();ctx.moveTo(-r*.48,-r*.25);ctx.lineTo(r*.38,-r*.25);ctx.moveTo(-r*.48,r*.25);ctx.lineTo(r*.38,r*.25);ctx.stroke();
+  ctx.restore();
+}
+
+function drawGroundSprite(ctx, u) {
+  const f=spriteFaction(u.side), r=u.radius, type=u.reg?.type || 'INFANTRY';
+  ctx.save();
+  // Small directional shadow gives each unit a grounded footprint.
+  ctx.fillStyle='rgba(0,0,0,.42)';ctx.beginPath();ctx.ellipse(0,r*.62,r*.95,r*.34,0,0,Math.PI*2);ctx.fill();
+  ctx.shadowColor=f.glow;ctx.shadowBlur=6;
+  if(type==='MECH') {
+    // Bipedal combat walker with shoulder armor, reactor and arm cannon.
+    spritePolygon(ctx,[[-r*.48,-r*.5],[0,-r*.78],[r*.48,-r*.5],[r*.38,r*.2],[r*.2,r*.42],[-r*.2,r*.42],[-r*.38,r*.2]],f.hull);
+    spritePolygon(ctx,[[-r*.68,-r*.42],[-r*.25,-r*.62],[-r*.12,-r*.2],[-r*.55,r*.02]],f.dark);
+    spritePolygon(ctx,[[r*.25,-r*.62],[r*.68,-r*.42],[r*.55,r*.02],[r*.12,-r*.2]],f.dark);
+    ctx.fillStyle=f.glow;ctx.beginPath();ctx.arc(0,-r*.12,r*.2,0,Math.PI*2);ctx.fill();
+    spritePolygon(ctx,[[r*.32,-r*.18],[r*.92,-r*.28],[r*1.02,r*.02],[r*.35,r*.12]],'#718b9c');
+    ctx.fillStyle='#172a3a';ctx.fillRect(-r*.34,r*.28,r*.25,r*.52);ctx.fillRect(r*.1,r*.28,r*.25,r*.52);
+    ctx.fillStyle=f.trim;ctx.fillRect(-r*.28,r*.66,r*.17,r*.12);ctx.fillRect(r*.12,r*.66,r*.17,r*.12);
+  } else if(type==='ARTILLERY') {
+    // Tracked siege platform, long elevated cannon and stabilizers.
+    ctx.fillStyle=f.dark;ctx.fillRect(-r*.92,r*.12,r*1.82,r*.48);
+    ctx.fillStyle='#172b3c';ctx.fillRect(-r*.78,r*.2,r*1.55,r*.28);
+    for(let x=-3;x<=3;x++){ctx.fillStyle=f.trim;ctx.beginPath();ctx.arc(x*r*.22,r*.34,r*.07,0,Math.PI*2);ctx.fill();}
+    spritePolygon(ctx,[[-r*.55,-r*.32],[r*.32,-r*.38],[r*.55,r*.18],[-r*.68,r*.18]],f.hull);
+    ctx.fillStyle='#9cb4c2';ctx.fillRect(r*.02,-r*.48,r*1.02,r*.16);
+    ctx.fillStyle=f.glow;ctx.fillRect(r*.78,-r*.52,r*.24,r*.24);
+    ctx.strokeStyle=f.trim;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(-r*.72,-r*.1);ctx.lineTo(-r*1.08,-r*.38);ctx.moveTo(-r*.72,r*.1);ctx.lineTo(-r*1.08,r*.38);ctx.stroke();
+  } else if(type==='SKIRMISHER') {
+    // Fast recon trooper with angular armor and twin light weapons.
+    spritePolygon(ctx,[[-r*.45,-r*.58],[r*.12,-r*.72],[r*.48,-r*.24],[r*.34,r*.48],[-r*.28,r*.52],[-r*.52,-r*.05]],f.hull);
+    ctx.fillStyle='#101f30';ctx.beginPath();ctx.ellipse(r*.02,-r*.48,r*.28,r*.2,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=f.glow;ctx.fillRect(r*.08,-r*.52,r*.22,r*.09);
+    ctx.strokeStyle=f.trim;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(r*.3,-r*.12);ctx.lineTo(r*.92,-r*.3);ctx.moveTo(r*.26,r*.08);ctx.lineTo(r*.82,r*.28);ctx.stroke();
+    ctx.fillStyle=f.dark;ctx.fillRect(-r*.42,r*.35,r*.22,r*.42);ctx.fillRect(r*.12,r*.35,r*.22,r*.42);
+  } else {
+    // Armored infantry silhouette: helmet, torso, backpack and rifle.
+    ctx.fillStyle=f.dark;ctx.fillRect(-r*.4,-r*.05,r*.8,r*.78);
+    ctx.fillStyle=f.hull;ctx.beginPath();ctx.ellipse(0,-r*.38,r*.43,r*.38,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#0a1927';ctx.beginPath();ctx.ellipse(r*.08,-r*.39,r*.29,r*.14,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=f.glow;ctx.fillRect(r*.12,-r*.43,r*.22,r*.08);
+    ctx.fillStyle='#9cb5c5';ctx.fillRect(r*.32,-r*.08,r*.18,r*.42);
+    ctx.fillStyle=f.trim;ctx.fillRect(r*.36,-r*.16,r*.7,r*.1);
+    ctx.fillStyle=f.dark;ctx.fillRect(-r*.32,r*.55,r*.22,r*.36);ctx.fillRect(r*.1,r*.55,r*.22,r*.36);
+    ctx.fillStyle=f.glow;ctx.fillRect(-r*.48,r*.02,r*.12,r*.28);
+  }
+  ctx.shadowBlur=0;
+  // Chunky 80s/90s sci-fi miniature finish: bevels, access hatches, bolts and mechanical joints.
+  ctx.save();
+  if(type==='MECH') {
+    spriteArmorPanel(ctx,[[-r*.3,-r*.36],[0,-r*.53],[r*.3,-r*.36],[r*.22,-r*.12],[-r*.22,-r*.12]],'#7893a2',f.trim);
+    spriteVent(ctx,-r*.48,-r*.02,r*.22,r*.18,'#a8bac4',2);
+    spriteVent(ctx,r*.27,-r*.02,r*.22,r*.18,'#a8bac4',2);
+    for(const x of [-r*.47,r*.47]) spriteRivet(ctx,x,-r*.34,Math.max(.7,r*.035),f.trim);
+    spriteDetailLine(ctx,-r*.18,r*.36,-r*.18,r*.72,'#b5c6cf',Math.max(.8,r*.04),.8);
+    spriteDetailLine(ctx,r*.18,r*.36,r*.18,r*.72,'#b5c6cf',Math.max(.8,r*.04),.8);
+    ctx.fillStyle='#d0a94f';ctx.fillRect(-r*.1,r*.31,r*.2,r*.08);
+  } else if(type==='ARTILLERY') {
+    spriteArmorPanel(ctx,[[-r*.52,-r*.22],[-r*.22,-r*.34],[r*.3,-r*.3],[r*.48,r*.05],[-r*.42,r*.08]],'#8298a5',f.trim);
+    spriteVent(ctx,-r*.62,r*.2,r*.35,r*.18,'#9fb2bd',3);
+    spriteVent(ctx,r*.18,r*.2,r*.35,r*.18,'#9fb2bd',3);
+    for(const x of [-r*.72,-r*.42,r*.38,r*.68]) spriteRivet(ctx,x,r*.17,Math.max(.7,r*.03),f.trim);
+    ctx.fillStyle='#d1ad54';ctx.fillRect(-r*.08,-r*.55,r*.16,r*.07);
+  } else if(type==='SKIRMISHER') {
+    spriteArmorPanel(ctx,[[-r*.28,-r*.3],[r*.05,-r*.53],[r*.3,-r*.27],[r*.18,r*.03],[-r*.2,r*.02]],'#91a6b2',f.trim);
+    spriteVent(ctx,-r*.34,r*.08,r*.2,r*.13,'#9fb3bf',2);
+    for(const x of [-r*.34,r*.32]) spriteRivet(ctx,x,-r*.12,Math.max(.65,r*.028),f.trim);
+    ctx.fillStyle='#d2ad53';ctx.fillRect(-r*.08,r*.22,r*.16,r*.07);
+  } else {
+    spriteArmorPanel(ctx,[[-r*.28,-r*.1],[r*.02,-r*.28],[r*.3,-r*.08],[r*.2,r*.18],[-r*.2,r*.18]],'#8199a7',f.trim);
+    spriteVent(ctx,-r*.3,r*.16,r*.2,r*.16,'#9fb3bf',2);
+    spriteRivet(ctx,-r*.29,-r*.05,Math.max(.65,r*.03),f.trim);
+    spriteRivet(ctx,r*.28,-r*.05,Math.max(.65,r*.03),f.trim);
+    // Backpack canister and belt hardware.
+    ctx.fillStyle='#172b3b';ctx.fillRect(-r*.52,-r*.12,r*.16,r*.48);
+    ctx.fillStyle=f.glow;ctx.fillRect(-r*.5,-r*.04,r*.12,r*.08);
+    ctx.fillStyle='#d2ad53';ctx.fillRect(-r*.12,r*.28,r*.24,r*.07);
+  }
+  ctx.restore();
+  // Thin luminous faction stripe makes ownership obvious without hiding the silhouette.
+  ctx.strokeStyle=f.trim;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-r*.28,r*.12);ctx.lineTo(r*.18,r*.12);ctx.stroke();
+  ctx.restore();
+}
+
+function drawBattlefieldAtmosphere(c, battle) {
+  // Deterministic environmental dressing: rich enough to make each battle feel like a place,
+  // but generated from fixed coordinates so it never flickers or consumes gameplay RNG.
+  const naval = battle.kind === 'NAVAL';
+  const seedOffset = (battle.layoutSeed || 0) * 0.000173;
+  const hash = (n) => { const v = Math.sin(n * 127.1 + 311.7 + seedOffset) * 43758.5453; return v - Math.floor(v); };
+  c.save();
+  if (naval) {
+    // Distant nebulae and orbital haze.
+    const clouds = [
+      [420, 330, 430, 'rgba(23,75,135,0.17)'],
+      [1420, 760, 520, 'rgba(91,35,112,0.13)'],
+      [2350, 380, 470, 'rgba(20,104,125,0.14)']
+    ];
+    for (const [x,y,r,col] of clouds) {
+      const g = c.createRadialGradient(x,y,10,x,y,r);
+      g.addColorStop(0,col); g.addColorStop(1,'rgba(0,0,0,0)');
+      c.fillStyle=g; c.fillRect(x-r,y-r,r*2,r*2);
+    }
+    // Starfield in several depth layers.
+    for (let i=0;i<190;i++) {
+      const x=hash(i+11)*ARENA_W, y=hash(i+701)*ARENA_H;
+      const r=.45+hash(i+1401)*1.45;
+      c.globalAlpha=.22+hash(i+1901)*.58;
+      c.fillStyle=i%9===0?'#8bdcff':'#dbeafe';
+      c.beginPath(); c.arc(x,y,r,0,Math.PI*2); c.fill();
+      if (i%31===0) { c.globalAlpha=.18; c.fillRect(x-7,y,14,1); c.fillRect(x,y-7,1,14); }
+    }
+    c.globalAlpha=1;
+    // Faint orbital debris lanes and distant wreck silhouettes.
+    c.strokeStyle='rgba(104,157,197,0.12)'; c.lineWidth=2; c.setLineDash([18,24]);
+    c.beginPath(); c.ellipse(ARENA_W*.5,ARENA_H*.5,ARENA_W*.42,ARENA_H*.34,-.16,0,Math.PI*2); c.stroke(); c.setLineDash([]);
+    for(let i=0;i<7;i++) {
+      const x=180+hash(i+2400)*(ARENA_W-360), y=90+hash(i+2500)*(ARENA_H-180), a=hash(i+2600)*Math.PI;
+      c.save(); c.translate(x,y); c.rotate(a); c.globalAlpha=.22;
+      c.fillStyle='#64748b'; c.beginPath(); c.moveTo(-24,-7); c.lineTo(17,-9); c.lineTo(30,0); c.lineTo(12,8); c.lineTo(-22,6); c.closePath(); c.fill();
+      c.strokeStyle='#94a3b8'; c.lineWidth=1; c.stroke(); c.restore();
+    }
+  } else {
+    // Planetary ground: broad terrain bands, dust fields, impact scars and scattered debris.
+    const theme = battle.theme || { biome:'BARREN', ground:'#53606b', accent:'#aab8c2', haze:'rgba(119,147,166,0.15)' };
+    const biome = theme.biome || 'BARREN';
+    const ground = theme.ground || '#53606b', accent = theme.accent || '#aab8c2';
+    const g=c.createLinearGradient(0,0,ARENA_W,ARENA_H);
+    g.addColorStop(0,theme.haze || 'rgba(120,139,151,0.12)'); g.addColorStop(.48,'rgba(12,22,34,0.02)'); g.addColorStop(1,'rgba(0,0,0,0.28)');
+    c.fillStyle=g; c.fillRect(0,0,ARENA_W,ARENA_H);
+    c.globalAlpha=.18; c.fillStyle=ground; c.fillRect(0,0,ARENA_W,ARENA_H); c.globalAlpha=1;
+    for(let i=0;i<22;i++) {
+      const x=hash(i+3100)*ARENA_W, y=hash(i+3200)*ARENA_H, r=35+hash(i+3300)*105;
+      c.globalAlpha=.07+hash(i+3400)*.07; c.fillStyle=i%2?accent:ground;
+      c.beginPath(); c.ellipse(x,y,r,r*(.28+hash(i+3500)*.25),hash(i+3600)*Math.PI,0,Math.PI*2); c.fill();
+      c.globalAlpha=.20; c.strokeStyle=accent; c.lineWidth=1;
+      c.beginPath(); c.ellipse(x,y,r*.72,r*.2,0,0,Math.PI*2); c.stroke();
+    }
+    c.globalAlpha=.20; c.strokeStyle=accent; c.lineWidth=1;
+    for(let i=0;i<34;i++) {
+      const x=hash(i+3700)*ARENA_W, y=hash(i+3800)*ARENA_H, len=10+hash(i+3900)*42;
+      c.beginPath(); c.moveTo(x,y); c.lineTo(x+len,y+(hash(i+4000)-.5)*12); c.stroke();
+    }
+    c.globalAlpha=1;
+    // Distinctive large-scale surface signatures, all deterministic per battle seed.
+    if (biome === 'DESERT' || biome === 'BARREN') {
+      c.globalAlpha=.13; c.strokeStyle=accent; c.lineWidth=3;
+      for(let i=0;i<9;i++){const y=70+i*94+hash(i+5100)*28;c.beginPath();c.moveTo(0,y);c.bezierCurveTo(ARENA_W*.28,y-35,ARENA_W*.62,y+42,ARENA_W,y-12);c.stroke();}
+    } else if (biome === 'ICE') {
+      c.globalAlpha=.18; c.strokeStyle='#d9f5ff'; c.lineWidth=2;
+      for(let i=0;i<24;i++){const x=hash(i+5200)*ARENA_W,y=hash(i+5300)*ARENA_H;c.beginPath();c.moveTo(x-24,y-9);c.lineTo(x,y);c.lineTo(x+38,y+16);c.stroke();}
+    } else if (biome === 'JUNGLE') {
+      c.globalAlpha=.12; c.fillStyle='#092d24';
+      for(let i=0;i<65;i++){const x=hash(i+5400)*ARENA_W,y=hash(i+5500)*ARENA_H,r=8+hash(i+5600)*19;c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill();}
+    } else if (biome === 'INDUSTRIAL' || biome === 'URBAN') {
+      c.globalAlpha=.13; c.strokeStyle=accent; c.lineWidth=2;
+      for(let i=0;i<20;i++){const x=hash(i+5700)*ARENA_W,y=hash(i+5800)*ARENA_H,w=28+hash(i+5900)*70,h=16+hash(i+6000)*35;c.strokeRect(x,y,w,h);}
+    } else if (biome === 'VOLCANIC') {
+      c.globalAlpha=.22; c.strokeStyle='#ff7138'; c.lineWidth=2.5;
+      for(let i=0;i<15;i++){const x=hash(i+6100)*ARENA_W,y=hash(i+6200)*ARENA_H;c.beginPath();c.moveTo(x,y);c.lineTo(x+18,y+14);c.lineTo(x+9,y+33);c.lineTo(x+42,y+48);c.stroke();}
+    } else if (biome === 'CRYSTAL' || biome === 'DARK') {
+      c.globalAlpha=.18; c.strokeStyle=accent; c.lineWidth=1.6;
+      for(let i=0;i<28;i++){const x=hash(i+6300)*ARENA_W,y=hash(i+6400)*ARENA_H,h=8+hash(i+6500)*23;c.beginPath();c.moveTo(x-h*.35,y);c.lineTo(x,y-h);c.lineTo(x+h*.35,y);c.lineTo(x,y+h*.6);c.closePath();c.stroke();}
+    }
+    c.globalAlpha=1;
+    // Scattered angular wreckage / spent equipment silhouettes.
+    for(let i=0;i<12;i++) {
+      const x=hash(i+4100)*ARENA_W, y=hash(i+4200)*ARENA_H;
+      c.save(); c.translate(x,y); c.rotate(hash(i+4300)*Math.PI);
+      c.globalAlpha=.24; c.fillStyle='#050b13'; c.fillRect(-12,-4,24,8); c.fillRect(-4,-9,8,18);
+      c.strokeStyle='#82909c'; c.lineWidth=1; c.strokeRect(-12,-4,24,8); c.restore();
+    }
+    c.globalAlpha=1;
+    for (const d of (battle.decorations || [])) {
+      if (d.hazardous) {
+        const pulse = .5 + .5 * Math.sin((battle.elapsed || 0) * 3.2 + d.x * .013);
+        c.save(); c.globalAlpha = .12 + pulse * .12; c.strokeStyle = d.kind === 'LAVA_VENT' ? '#ff6538' : d.kind === 'CRYSTAL' ? '#d69aff' : '#ffb36b'; c.lineWidth = 2;
+        c.beginPath(); c.arc(d.x, d.y, d.hazardRadius * (.88 + pulse * .12), 0, Math.PI * 2); c.stroke();
+        c.globalAlpha = .045 + pulse * .035; c.fillStyle = c.strokeStyle; c.beginPath(); c.arc(d.x, d.y, d.hazardRadius, 0, Math.PI * 2); c.fill(); c.restore();
+      }
+      c.save(); c.translate(d.x,d.y); c.rotate(d.angle || 0); c.scale(d.scale || 1,d.scale || 1);
+      c.globalAlpha=.78;
+      if (d.kind === 'ALIEN_FLORA') {
+        c.strokeStyle=d.variant%2?'#75b96d':'#43a98b'; c.lineWidth=4; c.lineCap='round';
+        c.beginPath();c.moveTo(0,12);c.lineTo(0,-15);c.moveTo(0,-3);c.lineTo(-12,-14);c.moveTo(0,2);c.lineTo(13,-10);c.stroke();
+        c.fillStyle='#9bd18b';c.beginPath();c.ellipse(-12,-14,8,4,-.5,0,Math.PI*2);c.ellipse(13,-10,8,4,.5,0,Math.PI*2);c.fill();
+      } else if (d.kind === 'ICE_SPIRE' || d.kind === 'CRYSTAL' || d.kind === 'OBSIDIAN') {
+        c.fillStyle=d.kind==='ICE_SPIRE'?'rgba(174,229,245,.55)':d.kind==='CRYSTAL'?'rgba(173,126,229,.52)':'rgba(112,119,178,.48)';
+        c.strokeStyle=d.kind==='ICE_SPIRE'?'#d8f5ff':accent;c.lineWidth=1.5;
+        c.beginPath();c.moveTo(-9,12);c.lineTo(-4,-12);c.lineTo(1,-25);c.lineTo(8,-7);c.lineTo(12,12);c.closePath();c.fill();c.stroke();
+      } else if (d.kind === 'LAVA_VENT') {
+        c.fillStyle='#281b1b';c.strokeStyle='#a94c2e';c.lineWidth=2;c.beginPath();c.ellipse(0,0,17,9,0,0,Math.PI*2);c.fill();c.stroke();
+        c.strokeStyle='#ff7438';c.lineWidth=2;c.beginPath();c.moveTo(-8,0);c.lineTo(-2,-5);c.lineTo(3,1);c.lineTo(9,-3);c.stroke();
+      } else if (d.kind === 'INDUSTRIAL_WRECK' || d.kind === 'RUIN' || d.kind === 'SCRAP') {
+        c.fillStyle='#202a34';c.strokeStyle=accent;c.lineWidth=1.2;
+        c.fillRect(-16,-7,30,14);c.fillRect(-7,-15,13,30);c.strokeRect(-16,-7,30,14);
+        c.strokeStyle='#d17a55';c.beginPath();c.moveTo(-12,-5);c.lineTo(10,5);c.stroke();
+      } else {
+        c.fillStyle='#927044';c.strokeStyle='#d0a66a';c.lineWidth=1.2;
+        c.beginPath();c.moveTo(-14,8);c.lineTo(-9,-8);c.lineTo(2,-14);c.lineTo(15,-3);c.lineTo(10,10);c.closePath();c.fill();c.stroke();
+      }
+      c.restore();
+    }
+  }
+  c.restore();
+}
+
+function drawCombat() {
+  if (!combat) return;
+  const cam = combatCamTransform();
+  const { w, h, zoom, cx, cy } = cam;
+
+  cCtx.fillStyle = combat.kind === 'NAVAL' ? '#02050e' : '#080e1a';
+  cCtx.fillRect(0, 0, w, h);
+
+  cCtx.save();
+  cCtx.translate(w / 2, h / 2);
+  cCtx.scale(zoom, zoom);
+  cCtx.translate(-cx, -cy);
+
+  // Arena bounds & tactical grid
+  cCtx.fillStyle = combat.kind === 'NAVAL' ? 'rgba(6, 12, 26, 0.85)' : (combat.theme ? combat.theme.fill : 'rgba(14, 24, 38, 0.9)');
+  cCtx.fillRect(0, 0, ARENA_W, ARENA_H);
+  cCtx.strokeStyle = 'rgba(56, 189, 248, 0.07)';
+  cCtx.lineWidth = 1;
+  for (let gx = 0; gx <= ARENA_W; gx += 70) {
+    cCtx.beginPath(); cCtx.moveTo(gx, 0); cCtx.lineTo(gx, ARENA_H); cCtx.stroke();
+  }
+  for (let gy = 0; gy <= ARENA_H; gy += 70) {
+    cCtx.beginPath(); cCtx.moveTo(0, gy); cCtx.lineTo(ARENA_W, gy); cCtx.stroke();
+  }
+  drawBattlefieldAtmosphere(cCtx, combat);
+  cCtx.strokeStyle = combat.kind === 'GROUND' ? (combat.theme?.stroke || 'rgba(56, 189, 248, 0.4)') : 'rgba(56, 189, 248, 0.4)';
+  cCtx.lineWidth = 3;
+  cCtx.strokeRect(0, 0, ARENA_W, ARENA_H);
+
+  // Objectives
+  for (const obj of combat.objectives) {
+    const col = obj.owner === 'P' ? '#38bdf8' : obj.owner === 'E' ? '#fb7185' : '#fbbf24';
+    cCtx.save();
+    cCtx.beginPath();
+    cCtx.arc(obj.x, obj.y, obj.r, 0, Math.PI * 2);
+    cCtx.fillStyle = obj.owner === 'P' ? 'rgba(56,189,248,0.12)' : obj.owner === 'E' ? 'rgba(251,113,133,0.12)' : 'rgba(251,191,36,0.10)';
+    cCtx.fill();
+    cCtx.strokeStyle = col;
+    cCtx.lineWidth = 2;
+    cCtx.setLineDash([8, 6]);
+    cCtx.stroke();
+    cCtx.setLineDash([]);
+    // Capture ring
+    const pct = Math.abs(obj.prog) / 100;
+    if (pct > 0.02) {
+      cCtx.beginPath();
+      cCtx.arc(obj.x, obj.y, obj.r - 6, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2);
+      cCtx.strokeStyle = obj.prog > 0 ? '#38bdf8' : '#fb7185';
+      cCtx.lineWidth = 4;
+      cCtx.stroke();
+    }
+    cCtx.fillStyle = col;
+    cCtx.font = 'bold 11px ui-monospace, monospace';
+    cCtx.textAlign = 'center';
+    cCtx.fillText(obj.name.toUpperCase(), obj.x, obj.y - obj.r - 8);
+    cCtx.restore();
+  }
+
+  // Obstacles
+  for (const o of combat.obstacles) {
+    cCtx.save();
+    cCtx.translate(o.x, o.y);
+    if (o.kind === 'ASTEROID' && o.verts) {
+      cCtx.beginPath();
+      cCtx.moveTo(o.verts[0].x, o.verts[0].y);
+      for (let i = 1; i < o.verts.length; i++) cCtx.lineTo(o.verts[i].x, o.verts[i].y);
+      cCtx.closePath();
+      const asteroidHp = Math.max(0, o.hp / o.maxHp);
+      cCtx.fillStyle = asteroidHp > 0.66 ? '#334155' : asteroidHp > 0.33 ? '#273449' : '#1b2638';
+      cCtx.fill();
+      cCtx.strokeStyle = asteroidHp > 0.5 ? '#64748b' : '#94a3b8';
+      cCtx.lineWidth = 2;
+      cCtx.stroke();
+      // Fracture seams become more visible as the asteroid is battered.
+      if (asteroidHp < 0.82) {
+        cCtx.save();
+        cCtx.strokeStyle = `rgba(226,232,240,${0.18 + (1 - asteroidHp) * 0.62})`;
+        cCtx.lineWidth = 1.5;
+        const crackCount = asteroidHp < 0.38 ? 4 : 2;
+        for (let ci = 0; ci < crackCount; ci++) {
+          const a = (ci * 2.399 + (o.seed || 0)) % (Math.PI * 2);
+          cCtx.beginPath(); cCtx.moveTo(Math.cos(a) * o.r * 0.12, Math.sin(a) * o.r * 0.12);
+          cCtx.lineTo(Math.cos(a + 0.22) * o.r * 0.48, Math.sin(a + 0.22) * o.r * 0.48);
+          cCtx.lineTo(Math.cos(a - 0.08) * o.r * 0.86, Math.sin(a - 0.08) * o.r * 0.86);
+          cCtx.stroke();
+        }
+        cCtx.restore();
+      }
+    } else if (o.kind === 'BARRICADE') {
+      cCtx.rotate(o.angle || 0);
+      cCtx.fillStyle = 'rgba(251, 191, 36, 0.25)';
+      cCtx.strokeStyle = '#fbbf24';
+      cCtx.lineWidth = 2.5;
+      cCtx.fillRect(-o.r, -o.r * 0.65, o.r * 2, o.r * 1.3);
+      cCtx.strokeRect(-o.r, -o.r * 0.65, o.r * 2, o.r * 1.3);
+      cCtx.strokeStyle = 'rgba(255,230,160,0.55)'; cCtx.lineWidth = 1;
+      cCtx.beginPath(); cCtx.moveTo(-o.r * .65, -o.r * .35); cCtx.lineTo(o.r * .65, o.r * .35); cCtx.stroke();
+    } else if (o.kind === 'RIDGE' && o.verts) {
+      cCtx.beginPath(); cCtx.moveTo(o.verts[0].x, o.verts[0].y);
+      for (let vi = 1; vi < o.verts.length; vi++) cCtx.lineTo(o.verts[vi].x, o.verts[vi].y);
+      cCtx.closePath();
+      const ridgePalette = { DESERT:['#665039','#b08b58'], JUNGLE:['#234b3c','#63936c'], ICE:['#456b80','#b6dce9'], INDUSTRIAL:['#454044','#a06f60'], CRYSTAL:['#3d3151','#9e82c5'], DARK:['#2c3450','#7884b6'], VOLCANIC:['#49271f','#c36a3c'], URBAN:['#3d3944','#9b858d'], BARREN:['#3c4852','#8795a1'] };
+      const ridgeColors = ridgePalette[combat.theme?.biome || 'BARREN'] || ridgePalette.BARREN;
+      cCtx.fillStyle = ridgeColors[0]; cCtx.fill();
+      cCtx.strokeStyle = ridgeColors[1]; cCtx.lineWidth = 2; cCtx.stroke();
+      cCtx.strokeStyle = ridgeColors[1] + '88'; cCtx.lineWidth = 1;
+      cCtx.beginPath(); cCtx.moveTo(-o.r * .45, o.r * .12); cCtx.lineTo(o.r * .18, -o.r * .3); cCtx.stroke();
+    } else {
+      cCtx.beginPath(); cCtx.arc(0, 0, o.r, 0, Math.PI * 2);
+      cCtx.fillStyle = '#1e293b'; cCtx.fill(); cCtx.strokeStyle = '#334155'; cCtx.lineWidth = 2; cCtx.stroke();
+    }
+    cCtx.restore();
+  }
+
+  // Projectiles: weapon silhouettes, hot cores and short-lived luminous trails.
+  for (const p of combat.projectiles) {
+    cCtx.save();
+    if (p.trail && p.trail.length > 1) {
+      cCtx.strokeStyle = p.color; cCtx.globalAlpha = .22; cCtx.lineWidth = p.splash ? 7 : 3;
+      cCtx.beginPath(); cCtx.moveTo(p.trail[0].x,p.trail[0].y); for (let ti=1;ti<p.trail.length;ti++) cCtx.lineTo(p.trail[ti].x,p.trail[ti].y); cCtx.lineTo(p.x,p.y); cCtx.stroke();
+    }
+    cCtx.translate(p.x, p.y); cCtx.rotate(Math.atan2(p.vy, p.vx));
+    cCtx.shadowColor = p.color; cCtx.shadowBlur = p.splash ? 19 : 12;
+    if (p.weapon === 'cannon' || p.splash > 0) {
+      cCtx.fillStyle=p.color; cCtx.beginPath(); cCtx.moveTo(9,0); cCtx.lineTo(-5,-4); cCtx.lineTo(-12,0); cCtx.lineTo(-5,4); cCtx.closePath(); cCtx.fill();
+      cCtx.fillStyle='#fff7d6'; cCtx.fillRect(-3,-1.2,9,2.4);
+    } else if (p.weapon === 'plasma') {
+      cCtx.fillStyle=p.color; cCtx.beginPath(); cCtx.ellipse(1,0,9,4.5,0,0,Math.PI*2); cCtx.fill();
+      cCtx.fillStyle='#fff'; cCtx.beginPath(); cCtx.arc(3,0,2,0,Math.PI*2); cCtx.fill();
+    } else {
+      cCtx.strokeStyle=p.color; cCtx.lineWidth=3.2; cCtx.beginPath(); cCtx.moveTo(-17,0); cCtx.lineTo(8,0); cCtx.stroke();
+      cCtx.strokeStyle='rgba(255,255,255,.9)'; cCtx.lineWidth=1.2; cCtx.beginPath(); cCtx.moveTo(-8,0); cCtx.lineTo(7,0); cCtx.stroke();
+    }
+    cCtx.restore();
+  }
+
+  // Expanding destruction shock fronts.
+  for (const sw of (combat.shockwaves || [])) { cCtx.save(); cCtx.globalAlpha=clamp(sw.life/sw.maxLife,0,1)*.72; cCtx.strokeStyle=sw.color; cCtx.lineWidth=3; cCtx.shadowColor=sw.color; cCtx.shadowBlur=12; cCtx.beginPath(); cCtx.arc(sw.x,sw.y,sw.r,0,Math.PI*2); cCtx.stroke(); cCtx.restore(); }
+
+  // Burnt-out capital ships drift briefly across the battle before fading.
+  for (const wr of (combat.wrecks || [])) {
+    cCtx.save(); cCtx.translate(wr.x,wr.y); cCtx.rotate(wr.angle);
+    cCtx.globalAlpha=clamp(wr.life/wr.maxLife,0,0.78);
+    cCtx.fillStyle='#111827'; cCtx.strokeStyle=wr.side==='P'?'#64748b':'#9f5360'; cCtx.lineWidth=2;
+    cCtx.beginPath(); cCtx.moveTo(-wr.r*1.3,-wr.r*.45); cCtx.lineTo(wr.r*.65,-wr.r*.58); cCtx.lineTo(wr.r*1.15,0); cCtx.lineTo(wr.r*.45,wr.r*.5); cCtx.lineTo(-wr.r*1.1,wr.r*.35); cCtx.closePath(); cCtx.fill(); cCtx.stroke();
+    cCtx.strokeStyle='#f97316'; cCtx.globalAlpha*=.72; cCtx.lineWidth=2; cCtx.beginPath(); cCtx.moveTo(-wr.r*.4,-wr.r*.12); cCtx.lineTo(wr.r*.55,wr.r*.18); cCtx.stroke();
+    cCtx.restore();
+  }
+
+  // Ground Orders (Feature 1)
+  if (combat.kind === 'GROUND' && combat.orders) {
+    for (const u of combat.units) {
+      if (u.hp <= 0 || u.fled || u.side !== 'P' || u.id === combat.activeId) continue;
+      const ord = combat.orders[u.id];
+      if (!ord) continue;
+      const dOrd = Math.hypot(ord.targetX - u.x, ord.targetY - u.y);
+      if (dOrd > 40) {
+        cCtx.save();
+        cCtx.strokeStyle = ord.type === 'ADVANCE' ? 'rgba(251,113,133,0.45)' : 'rgba(56,189,248,0.45)';
+        cCtx.lineWidth = 1.5;
+        cCtx.setLineDash([5, 5]);
+        cCtx.beginPath();
+        cCtx.moveTo(u.x, u.y);
+        cCtx.lineTo(ord.targetX, ord.targetY);
+        cCtx.stroke();
+        cCtx.setLineDash([]);
+        const a = Math.atan2(ord.targetY - u.y, ord.targetX - u.x);
+        cCtx.translate(ord.targetX, ord.targetY);
+        cCtx.rotate(a);
+        cCtx.fillStyle = ord.type === 'ADVANCE' ? '#fb7185' : '#38bdf8';
+        cCtx.beginPath();
+        cCtx.moveTo(6, 0);
+        cCtx.lineTo(-5, -4);
+        cCtx.lineTo(-5, 4);
+        cCtx.closePath();
+        cCtx.fill();
+        cCtx.restore();
+      }
+    }
+  }
+
+  // Units
+  for (const u of combat.units) {
+    if (u.hp <= 0 || u.fled) continue;
+    const isActive = u.id === combat.activeId;
+    const col = (u.hitFlash > 0 || u.rallyFlash > 0) ? '#ffffff' : (u.side === 'P' ? '#38bdf8' : '#fb7185');
+
+    cCtx.save();
+    const movingBob = combat.kind === 'GROUND' && Math.hypot(u.vx||0,u.vy||0) > 12 ? Math.sin(animTime*15 + u.x*.03)*1.35 : 0;
+    cCtx.translate(u.x, u.y + movingBob);
+    const enginePulse = 0.72 + Math.sin(animTime * 13 + u.x * 0.01) * 0.22;
+    if (combat.kind === 'NAVAL') { cCtx.save(); cCtx.globalAlpha=.24*enginePulse; cCtx.fillStyle=u.side==='P'?'#38bdf8':'#fb7185'; cCtx.shadowColor=cCtx.fillStyle; cCtx.shadowBlur=15; cCtx.beginPath(); cCtx.ellipse(-u.radius*.92,0,u.radius*.9, u.radius*.24,0,0,Math.PI*2); cCtx.fill(); cCtx.restore(); }
+
+    if (u.routing) {
+      cCtx.beginPath();
+      cCtx.arc(0, 0, u.radius + 7 + Math.sin(animTime * 10) * 2, 0, Math.PI * 2);
+      cCtx.strokeStyle = '#fde047';
+      cCtx.lineWidth = 2.5;
+      cCtx.stroke();
+    } else if (isActive) {
+      cCtx.beginPath();
+      cCtx.arc(0, 0, u.radius + 9, 0, Math.PI * 2);
+      cCtx.strokeStyle = '#fbbf24';
+      cCtx.lineWidth = 2;
+      cCtx.stroke();
+    }
+
+    cCtx.rotate(u.aim);
+    if (u.recoil > 0) cCtx.translate(-u.recoil * (combat.kind === 'NAVAL' ? 2.2 : 1.5),0);
+    if (combat.kind === 'NAVAL') drawNavalSprite(cCtx, u, col);
+    else drawGroundSprite(cCtx, u);
+    if (u.muzzleFlash > 0) { cCtx.save(); cCtx.globalAlpha=clamp(u.muzzleFlash/.095,0,1); cCtx.fillStyle='#fff7cc'; cCtx.shadowColor=u.side==='P'?'#38bdf8':'#fb7185'; cCtx.shadowBlur=18; cCtx.beginPath(); cCtx.moveTo(u.radius*.8,-4); cCtx.lineTo(u.radius*1.55,0); cCtx.lineTo(u.radius*.8,4); cCtx.closePath(); cCtx.fill(); cCtx.restore(); }
+    if (u.impactPulse > 0) { cCtx.save(); cCtx.globalAlpha=clamp(u.impactPulse/.22,0,1)*.65; cCtx.strokeStyle='#fff'; cCtx.lineWidth=2; cCtx.beginPath(); cCtx.arc(0,0,u.radius+5+(1-u.impactPulse/.22)*12,0,Math.PI*2); cCtx.stroke(); cCtx.restore(); }
+    cCtx.restore();
+
+    // HP & Shield bar
+    const hpPct = u.hp / u.maxHp;
+    cCtx.fillStyle = '#0f172a';
+    cCtx.fillRect(u.x - 18, u.y + u.radius + 6, 36, 4);
+    cCtx.fillStyle = hpPct > 0.5 ? '#34d399' : hpPct > 0.25 ? '#fbbf24' : '#fb7185';
+    cCtx.fillRect(u.x - 18, u.y + u.radius + 6, 36 * hpPct, 4);
+    if (u.maxShields > 0 && u.shields > 0) {
+      cCtx.fillStyle = '#38bdf8';
+      cCtx.fillRect(u.x - 18, u.y + u.radius + 11, 36 * (u.shields / u.maxShields), 2.5);
+    }
+    if (u.routing) {
+      cCtx.fillStyle = '#fde047';
+      cCtx.font = 'bold 9px ui-monospace, monospace';
+      cCtx.textAlign = 'center';
+      cCtx.fillText('ROUT', u.x, u.y - u.radius - 7);
+    }
+  }
+
+  // Particles
+  for (const pt of combat.particles) {
+    cCtx.save();
+    cCtx.globalAlpha = clamp(pt.life / pt.maxLife, 0, 1);
+    cCtx.fillStyle = pt.color;
+    cCtx.beginPath();
+    if (pt.r > 2.8) { cCtx.beginPath(); cCtx.moveTo(pt.x-pt.vx*.025,pt.y-pt.vy*.025); cCtx.lineTo(pt.x,pt.y); cCtx.lineWidth=Math.max(1,pt.r*.55); cCtx.strokeStyle=pt.color; cCtx.stroke(); }
+    cCtx.beginPath(); cCtx.arc(pt.x, pt.y, pt.r, 0, Math.PI * 2);
+    cCtx.fill();
+    cCtx.restore();
+  }
+
+  // Off-screen friendly unit indicators (Feature 3, drawn before restore)
+  const halfW = (w / 2) / zoom;
+  const halfH = (h / 2) / zoom;
+  const offFriendly = combat.units
+    .filter(u => u.side === 'P' && u.hp > 0 && !u.fled &&
+      (u.x < cx - halfW || u.x > cx + halfW || u.y < cy - halfH || u.y > cy + halfH))
+    .sort((a, b) => Math.hypot(a.x - cx, a.y - cy) - Math.hypot(b.x - cx, b.y - cy))
+    .slice(0, 6);
+  const padW = 18 / zoom;
+  const chevSize = clamp(11 * zoom, 8, 14) / zoom;
+  for (const u of offFriendly) {
+    const ix = clamp(u.x, cx - halfW + padW, cx + halfW - padW);
+    const iy = clamp(u.y, cy - halfH + padW, cy + halfH - padW);
+    const ang = Math.atan2(u.y - cy, u.x - cx);
+    cCtx.save();
+    cCtx.translate(ix, iy);
+    cCtx.rotate(ang);
+    cCtx.fillStyle = '#38bdf8';
+    cCtx.strokeStyle = '#030712';
+    cCtx.lineWidth = 1.5 / zoom;
+    cCtx.beginPath();
+    cCtx.moveTo(chevSize, 0);
+    cCtx.lineTo(-chevSize * 0.7, -chevSize * 0.65);
+    cCtx.lineTo(-chevSize * 0.35, 0);
+    cCtx.lineTo(-chevSize * 0.7, chevSize * 0.65);
+    cCtx.closePath();
+    cCtx.fill();
+    cCtx.stroke();
+    cCtx.restore();
+  }
+
+  cCtx.restore();
+
+  // 148x148 Minimap in top-right (Feature 3)
+  const mmSize = 148, mmX = w - mmSize - 12, mmY = 12;
+  cCtx.save();
+  cCtx.fillStyle = 'rgba(10, 17, 34, 0.88)';
+  cCtx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+  cCtx.lineWidth = 2;
+  cCtx.beginPath();
+  if (cCtx.roundRect) cCtx.roundRect(mmX, mmY, mmSize, mmSize, 10);
+  else cCtx.rect(mmX, mmY, mmSize, mmSize);
+  cCtx.fill();
+  cCtx.stroke();
+
+  const sx = mmSize / ARENA_W, sy = mmSize / ARENA_H;
+  cCtx.strokeStyle = 'rgba(148, 163, 184, 0.3)';
+  cCtx.lineWidth = 1;
+  cCtx.strokeRect(mmX + 2, mmY + 2, mmSize - 4, mmSize - 4);
+
+  cCtx.fillStyle = '#475569';
+  for (const o of combat.obstacles) {
+    cCtx.beginPath();
+    cCtx.arc(mmX + o.x * sx, mmY + o.y * sy, 2, 0, Math.PI * 2);
+    cCtx.fill();
+  }
+  for (const obj of combat.objectives) {
+    cCtx.strokeStyle = obj.owner === 'P' ? '#38bdf8' : obj.owner === 'E' ? '#fb7185' : '#fbbf24';
+    cCtx.lineWidth = 1.5;
+    cCtx.beginPath();
+    cCtx.arc(mmX + obj.x * sx, mmY + obj.y * sy, Math.max(3.5, obj.r * sx), 0, Math.PI * 2);
+    cCtx.stroke();
+  }
+  for (const u of combat.units) {
+    if (u.hp <= 0 || u.fled) continue;
+    cCtx.fillStyle = u.side === 'P' ? '#38bdf8' : '#fb7185';
+    cCtx.beginPath();
+    cCtx.arc(mmX + u.x * sx, mmY + u.y * sy, u.id === combat.activeId ? 3.2 : 2.3, 0, Math.PI * 2);
+    cCtx.fill();
+  }
+  const vx = cx - halfW, vy = cy - halfH, vw = halfW * 2, vh = halfH * 2;
+  cCtx.strokeStyle = '#ffffff';
+  cCtx.lineWidth = 1;
+  cCtx.strokeRect(mmX + vx * sx, mmY + vy * sy, vw * sx, vh * sy);
+  cCtx.restore();
+
+  // Victory / Defeat banner overlay on canvas
+  if (combat.winner) {
+    cCtx.fillStyle = 'rgba(2, 6, 23, 0.65)';
+    cCtx.fillRect(0, h * 0.36, w, 110);
+    cCtx.strokeStyle = combat.winner === 'P' ? '#38bdf8' : '#fb7185';
+    cCtx.lineWidth = 2;
+    cCtx.strokeRect(0, h * 0.36, w, 110);
+    cCtx.fillStyle = combat.winner === 'P' ? '#38bdf8' : '#fb7185';
+    cCtx.font = '800 28px system-ui, sans-serif';
+    cCtx.textAlign = 'center';
+    cCtx.fillText(combat.winner === 'P' ? 'VICTORY' : 'DEFEAT', w / 2, h * 0.36 + 46);
+    cCtx.fillStyle = '#e2e8f0';
+    cCtx.font = 'bold 13px ui-monospace, monospace';
+    cCtx.fillText(combat.endReason, w / 2, h * 0.36 + 78);
+  }
+  if (cLongPressState) {
+    cCtx.save();
+    cCtx.strokeStyle = '#38bdf8';
+    cCtx.lineWidth = 3;
+    cCtx.beginPath();
+    cCtx.arc(cLongPressState.sx, cLongPressState.sy, 22, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * cLongPressState.progress);
+    cCtx.stroke();
+    cCtx.restore();
+  }
+}
+
+// Combat Input Listeners
+window.addEventListener('keydown', e => {
+  if (!combat) return;
+  cInput.keys[e.code] = true;
+  if (e.code === 'Tab') {
+    e.preventDefault();
+    cycleHotSwap(1);
+  } else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'Space') {
+    e.preventDefault();
+    const active = combat.units.find(u => u.id === combat.activeId);
+    triggerCombatDash(active);
+  } else if (e.code >= 'Digit1' && e.code <= 'Digit6') {
+    const idx = parseInt(e.code.replace('Digit', ''), 10) - 1;
+    const allies = combat.units.filter(u => u.side === 'P');
+    if (allies[idx]) hotSwapUnit(allies[idx].id);
+  } else if (e.code === 'KeyF' && !combat.winner && combat.kind === 'GROUND') {
+    const lead = combat.units.find(u => u.id === combat.activeId && u.hp > 0 && !u.fled);
+    const aiAllies = combat.units.filter(u => u.side === 'P' && u.id !== combat.activeId && u.hp > 0 && !u.fled && !u.routing);
+    if (lead && aiAllies.length) {
+      combat.orders = combat.orders || {};
+      // targetUnitId: optional enemy unit ID for live target tracking
+      aiAllies.forEach((u, i) => {
+        const off = groundFormationOffset(i, aiAllies.length, 'HOLD', lead.x, lead.y);
+        combat.orders[u.id] = { type: 'HOLD', targetX: lead.x + off.x, targetY: lead.y + off.y, targetUnitId: null };
+      });
+      sfx.play('swap', 0.7);
+      combatLog(`Ordered ${aiAllies.length} units to HOLD toward lead position`);
+    }
+  }
+});
+window.addEventListener('keyup', e => {
+  cInput.keys[e.code] = false;
+});
+cCanvas.addEventListener('mousemove', e => {
+  const rect = cCanvas.getBoundingClientRect();
+  cInput.mouseX = e.clientX - rect.left;
+  cInput.mouseY = e.clientY - rect.top;
+});
+function issueGroundOrders(worldX, worldY, targetUnitId, targetObjId) {
+  if (!combat || combat.winner || combat.kind !== 'GROUND') return;
+  const aiAllies = combat.units.filter(u => u.side === 'P' && u.id !== combat.activeId && u.hp > 0 && !u.fled && !u.routing);
+  if (!aiAllies.length) return;
+  combat.orders = combat.orders || {};
+
+  let type = 'FLANK', tx = worldX, ty = worldY, tUnitId = null, label = `(${Math.round(worldX)}, ${Math.round(worldY)})`;
+  if (targetUnitId) {
+    const enemy = combat.units.find(u => u.id === targetUnitId && u.hp > 0 && !u.fled);
+    if (enemy) { type = 'ADVANCE'; tx = enemy.x; ty = enemy.y; tUnitId = enemy.id; label = enemy.reg.name; }
+  } else if (targetObjId) {
+    const obj = combat.objectives.find(o => o.id === targetObjId);
+    if (obj) { type = 'ADVANCE'; tx = obj.x; ty = obj.y; label = obj.name; }
+  }
+
+  // Keep squads from stacking on one pixel: advance forms a loose line,
+  // while flank orders fan units around the selected point.
+  aiAllies.forEach((u, i) => {
+    const off = groundFormationOffset(i, aiAllies.length, type, tx, ty);
+    combat.orders[u.id] = { type, targetX: clamp(tx + off.x, 40, ARENA_W - 40), targetY: clamp(ty + off.y, 40, ARENA_H - 40), targetUnitId: tUnitId };
+  });
+  sfx.play('swap', 0.7);
+  combatLog(`Ordered ${aiAllies.length} units to ${type} toward ${label}`);
+}
+
+function triggerGroundOrderAtScreen(sx, sy) {
+  const wPt = combatScreenToWorld(sx, sy);
+  const enemy = combat.units.find(u => u.side === 'E' && u.hp > 0 && !u.fled && Math.hypot(u.x - wPt.x, u.y - wPt.y) <= u.radius + 18);
+  const obj = !enemy ? combat.objectives.find(o => Math.hypot(o.x - wPt.x, o.y - wPt.y) <= o.r) : null;
+  issueGroundOrders(wPt.x, wPt.y, enemy ? enemy.id : null, obj ? obj.id : null);
+}
+
+cCanvas.addEventListener('contextmenu', e => {
+  if (!combat) return;
+  e.preventDefault();
+  if (combat.winner || combat.kind !== 'GROUND') return;
+  const rect = cCanvas.getBoundingClientRect();
+  triggerGroundOrderAtScreen(e.clientX - rect.left, e.clientY - rect.top);
+});
+
+let cLongPressTimer = null;
+let cLongPressInterval = null;
+let cLongPressState = null;
+function clearLongPress() {
+  clearTimeout(cLongPressTimer);
+  clearInterval(cLongPressInterval);
+  cLongPressTimer = null;
+  cLongPressInterval = null;
+  cLongPressState = null;
+}
+cCanvas.addEventListener('pointerdown', e => {
+  if (!combat || combat.winner || combat.kind !== 'GROUND') return;
+  if (e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
+  const rect = cCanvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+  clearLongPress();
+  const started = Date.now();
+  cLongPressState = { sx, sy, progress: 0 };
+  cLongPressInterval = setInterval(() => {
+    if (cLongPressState) cLongPressState.progress = Math.min(1, (Date.now() - started) / 400);
+  }, 80);
+  cLongPressTimer = setTimeout(() => {
+    clearLongPress();
+    triggerGroundOrderAtScreen(sx, sy);
+  }, 400);
+});
+cCanvas.addEventListener('pointermove', e => {
+  if (!cLongPressTimer || !cLongPressState) return;
+  const rect = cCanvas.getBoundingClientRect();
+  if (Math.hypot((e.clientX - rect.left) - cLongPressState.sx, (e.clientY - rect.top) - cLongPressState.sy) > 15) {
+    clearLongPress();
+  }
+});
+window.addEventListener('pointerup', clearLongPress);
+window.addEventListener('pointercancel', clearLongPress);
+
+cCanvas.addEventListener('mousedown', e => {
+  if (!combat || combat.winner) return;
+  if (e.button === 0) {
+    sfx.init();
+    const rect = cCanvas.getBoundingClientRect();
+    const sx = e.clientX - rect.left;
+    const sy = e.clientY - rect.top;
+    const mmSize = 148, mmX = cCanvas.width - mmSize - 12, mmY = 12;
+    if (sx >= mmX && sx <= mmX + mmSize && sy >= mmY && sy <= mmY + mmSize) {
+      combat.camX = clamp(((sx - mmX) / mmSize) * ARENA_W, 0, ARENA_W);
+      combat.camY = clamp(((sy - mmY) / mmSize) * ARENA_H, 0, ARENA_H);
+      combat.camSnapTimer = 1.2;
+      return;
+    }
+    cInput.mouseX = sx;
+    cInput.mouseY = sy;
+    cInput.mouseDown = true;
+  }
+});
+window.addEventListener('mouseup', () => { cInput.mouseDown = false; });
+
+function bindCombatJoystick(padEl, knobEl, isAim) {
+  if (!padEl || !knobEl) return;
+  let pid = null;
+  const maxR = 36;
+  const update = (cx, cy) => {
+    const rect = padEl.getBoundingClientRect();
+    const dx = cx - (rect.left + rect.width / 2);
+    const dy = cy - (rect.top + rect.height / 2);
+    const d = Math.hypot(dx, dy);
+    const cl = Math.min(maxR, d);
+    const ang = Math.atan2(dy, dx);
+    const kx = d > 4 ? Math.cos(ang) * cl : 0;
+    const ky = d > 4 ? Math.sin(ang) * cl : 0;
+    knobEl.style.transform = `translate(calc(-50% + ${kx}px), calc(-50% + ${ky}px))`;
+    if (isAim) {
+      cInput.joyAimX = kx / maxR;
+      cInput.joyAimY = ky / maxR;
+    } else {
+      cInput.joyMoveX = kx / maxR;
+      cInput.joyMoveY = ky / maxR;
+    }
+  };
+  padEl.addEventListener('pointerdown', e => {
+    if (!combat) return;
+    e.preventDefault();
+    sfx.init();
+    pid = e.pointerId;
+    try { padEl.setPointerCapture(pid); } catch (_) {}
+    if (isAim) cInput.joyAimActive = true;
+    update(e.clientX, e.clientY);
+  });
+  padEl.addEventListener('pointermove', e => {
+    if (e.pointerId === pid) update(e.clientX, e.clientY);
+  });
+  const reset = e => {
+    if (e.pointerId !== pid) return;
+    pid = null;
+    knobEl.style.transform = 'translate(-50%, -50%)';
+    if (isAim) { cInput.joyAimActive = false; cInput.joyAimX = 0; cInput.joyAimY = 0; }
+    else { cInput.joyMoveX = 0; cInput.joyMoveY = 0; }
+  };
+  padEl.addEventListener('pointerup', reset);
+  padEl.addEventListener('pointercancel', reset);
+}
+bindCombatJoystick(document.getElementById('cJoyMove'), document.getElementById('cJoyMoveKnob'), false);
+bindCombatJoystick(document.getElementById('cJoyAim'), document.getElementById('cJoyAimKnob'), true);
+
+document.getElementById('cBtnDash').onclick = () => {
+  if (!combat || combat.winner) return;
+  const active = combat.units.find(u => u.id === combat.activeId);
+  triggerCombatDash(active);
+};
+
+document.getElementById('btnCombatMute').onclick = e => {
+  sfx.muted = !sfx.muted;
+  e.currentTarget.textContent = `SFX: ${sfx.muted ? 'OFF' : 'ON'}`;
+};
+document.getElementById('btnAutoResolve').onclick = autoResolveCombat;
+document.getElementById('btnEndCombat').onclick = () => {
+  sfx.init();
+  cInput.keys = {};
+  const wasGround = combat && combat.kind === 'GROUND';
+  document.getElementById('combat').classList.remove('show');
+  const touchEl = document.getElementById('combatTouch');
+  if (touchEl) touchEl.classList.remove('active');
+  combat = null;
+  view = wasGround ? 'PLANET' : 'GALAXY';
+  document.querySelectorAll('#viewTabs button').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  render();
+};
+
+// ============================================================================
+// MAP RENDERING (Galaxy + Planet)
+// ============================================================================
+const mapCanvas = document.getElementById('map');
+const mapCtx = mapCanvas.getContext('2d');
+
+function resizeMap() {
+  const wrap = document.getElementById('mapWrap');
+  mapCanvas.width = wrap.clientWidth;
+  mapCanvas.height = wrap.clientHeight;
+  renderMap();
+}
+
+function drawStarfield(w, h) {
+  mapCtx.fillStyle = '#02050e';
+  mapCtx.fillRect(0,0,w,h);
+
+  // Subtle tactical grid
+  mapCtx.strokeStyle = 'rgba(56, 189, 248, 0.04)';
+  mapCtx.lineWidth = 1;
+  const step = 48;
+  for (let x=step; x<w; x+=step) {
+    mapCtx.beginPath(); mapCtx.moveTo(x, 0); mapCtx.lineTo(x, h); mapCtx.stroke();
+  }
+  for (let y=step; y<h; y+=step) {
+    mapCtx.beginPath(); mapCtx.moveTo(0, y); mapCtx.lineTo(w, y); mapCtx.stroke();
+  }
+
+  STARS.forEach(s => {
+    const twinkle = 0.65 + 0.35 * Math.sin(animTime * s.speed + s.x * 20);
+    mapCtx.fillStyle = `rgba(226, 232, 240, ${(s.a * twinkle).toFixed(2)})`;
+    mapCtx.beginPath();
+    mapCtx.arc(s.x * w, s.y * h, s.r, 0, Math.PI * 2);
+    mapCtx.fill();
+  });
+}
+
+function renderMap() {
+  const w = mapCanvas.width, h = mapCanvas.height;
+  drawStarfield(w, h);
+  if (!G) return;
+
+  if (view === 'GALAXY') drawGalaxy(w,h);
+  else drawPlanet(w,h);
+}
+
+function drawGalaxy(w,h) {
+  const activeFleet = (selected && selected.type==='fleet') ? G.fleets[selected.id] : null;
+  const canJumpFrom = (activeFleet && activeFleet.owner==='P' && !activeFleet.moved)
+    ? G.systems.find(s => s.id === activeFleet.systemId)
+    : null;
+
+  // lanes
+  G.systems.forEach(sys => {
+    sys.lanes.forEach(tid => {
+      if (sys.id > tid) return;
+      const t = G.systems.find(s => s.id === tid);
+      if (!t) return;
+      const reachable = canJumpFrom && ((canJumpFrom.id===sys.id && canJumpFrom.lanes.includes(t.id)) || (canJumpFrom.id===t.id && canJumpFrom.lanes.includes(sys.id)));
+      mapCtx.beginPath();
+      mapCtx.moveTo(sys.x/100*w, sys.y/100*h);
+      mapCtx.lineTo(t.x/100*w, t.y/100*h);
+      mapCtx.strokeStyle = reachable ? 'rgba(56, 189, 248, 0.7)' : 'rgba(148,163,184,0.22)';
+      mapCtx.lineWidth = reachable ? 2 : 1.25;
+      mapCtx.stroke();
+    });
+  });
+
+  // systems
+  G.systems.forEach(sys => {
+    const cx = sys.x/100*w, cy = sys.y/100*h;
+    const isSel = G.selectedSystemId === sys.id;
+    const isHover = hoverNode === sys.id;
+    const isJumpTarget = canJumpFrom && canJumpFrom.lanes.includes(sys.id);
+
+    let col = '#64748b';
+    if (sys.intel === 'UNKNOWN') col = '#334155';
+    else if (sys.owner==='P') col = '#38bdf8';
+    else if (sys.owner==='E') col = '#fb7185';
+    else if (sys.owner==='C') col = '#fbbf24';
+
+    if (isJumpTarget) {
+      mapCtx.beginPath();
+      mapCtx.arc(cx, cy, 21 + Math.sin(animTime * 4) * 2, 0, Math.PI*2);
+      mapCtx.strokeStyle = 'rgba(56, 189, 248, 0.55)';
+      mapCtx.lineWidth = 1.5;
+      mapCtx.stroke();
+    }
+
+    mapCtx.save();
+    if (sys.intel !== 'UNKNOWN') {
+      mapCtx.shadowColor = col;
+      mapCtx.shadowBlur = isSel ? 18 : 10;
+    }
+    mapCtx.beginPath();
+    mapCtx.arc(cx, cy, isSel ? 15 : 11, 0, Math.PI*2);
+    mapCtx.fillStyle = col;
+    mapCtx.fill();
+    mapCtx.restore();
+
+    if (isSel || isHover) {
+      mapCtx.beginPath();
+      mapCtx.arc(cx, cy, isSel ? 19 : 16, 0, Math.PI*2);
+      mapCtx.strokeStyle = isSel ? '#fff' : 'rgba(255,255,255,0.5)';
+      mapCtx.lineWidth = isSel ? 2 : 1.2;
+      mapCtx.stroke();
+    }
+
+    if (sys.intel === 'UNKNOWN') {
+      mapCtx.fillStyle = '#94a3b8';
+      mapCtx.font = 'bold 11px ui-monospace, monospace';
+      mapCtx.textAlign = 'center';
+      mapCtx.textBaseline = 'middle';
+      mapCtx.fillText('?', cx, cy);
+    }
+
+    mapCtx.fillStyle = '#e2e8f0';
+    mapCtx.font = 'bold 11px ui-monospace, monospace';
+    mapCtx.textAlign = 'center';
+    mapCtx.textBaseline = 'alphabetic';
+    mapCtx.fillText(sys.intel==='UNKNOWN' ? 'UNKNOWN' : sys.name.toUpperCase(), cx, cy + 28);
+
+    const fleets = getFleetsAt(sys.id);
+    fleets.forEach((f,i) => {
+      const fx = cx;
+      const fy = cy - 26 - i * 18;
+      const cargoCount = fleetCargoRegs(f).length;
+      const label = `${f.ships.length}S: ${summarizeShipsCompact(f.ships)}${cargoCount ? ` +${cargoCount}R` : ''}`;
+      mapCtx.font = 'bold 9px ui-monospace, monospace';
+      const tw = mapCtx.measureText(label).width + 12;
+      mapCtx.fillStyle = 'rgba(2, 6, 23, 0.88)';
+      mapCtx.fillRect(fx - tw/2, fy - 8, tw, 15);
+      mapCtx.strokeStyle = f.owner==='P' ? '#38bdf8' : '#fb7185';
+      mapCtx.lineWidth = 1.2;
+      mapCtx.strokeRect(fx - tw/2, fy - 8, tw, 15);
+      mapCtx.fillStyle = f.owner==='P' ? '#38bdf8' : '#fb7185';
+      mapCtx.textAlign = 'center';
+      mapCtx.textBaseline = 'middle';
+      mapCtx.fillText(label, fx, fy);
+    });
+  });
+}
+
+function drawPlanet(w,h) {
+  const found = findPlanet(G.activePlanetId);
+  if (!found) return;
+  const { sys, planet } = found;
+  const theme = PLANET_THEMES[planet.id] || { fill:'rgba(12, 26, 46, 0.85)', stroke:'rgba(56, 189, 248, 0.35)', core:'rgba(56, 189, 248, 0.12)' };
+  const radius = Math.min(w,h)*0.38;
+
+  // planet body
+  mapCtx.save();
+  const grad = mapCtx.createRadialGradient(w/2 - radius*0.25, h/2 - radius*0.25, radius*0.1, w/2, h/2, radius);
+  grad.addColorStop(0, theme.core);
+  grad.addColorStop(1, theme.fill);
+  mapCtx.beginPath();
+  mapCtx.arc(w/2, h/2, radius, 0, Math.PI*2);
+  mapCtx.fillStyle = grad;
+  mapCtx.fill();
+  mapCtx.strokeStyle = theme.stroke;
+  mapCtx.lineWidth = 2;
+  mapCtx.stroke();
+  mapCtx.restore();
+
+  if (sys.intel === 'UNKNOWN') {
+    mapCtx.fillStyle = 'rgba(148, 163, 184, 0.75)';
+    mapCtx.font = 'bold 13px ui-monospace, monospace';
+    mapCtx.textAlign = 'center';
+    mapCtx.textBaseline = 'middle';
+    mapCtx.fillText('SYSTEM UNSURVEYED // JUMP FLEET TO SCAN', w/2, h/2);
+    return;
+  }
+
+  const activeArmy = (selected && selected.type==='army') ? planet.armies[selected.id] : null;
+  const srcSec = (activeArmy && activeArmy.owner==='P' && !activeArmy.moved)
+    ? planet.sectors.find(s => s.armyId === activeArmy.id)
+    : null;
+
+  // connections
+  planet.sectors.forEach(s => {
+    s.links.forEach(lid => {
+      if (s.id > lid) return;
+      const t = planet.sectors.find(x => x.id === lid);
+      if (!t) return;
+      const reachable = srcSec && ((srcSec.id===s.id && srcSec.links.includes(t.id)) || (srcSec.id===t.id && srcSec.links.includes(s.id)));
+      mapCtx.beginPath();
+      mapCtx.moveTo(s.x/100*w, s.y/100*h);
+      mapCtx.lineTo(t.x/100*w, t.y/100*h);
+      mapCtx.strokeStyle = reachable ? 'rgba(56, 189, 248, 0.75)' : 'rgba(148,163,184,0.32)';
+      mapCtx.lineWidth = reachable ? 2.2 : 1.5;
+      mapCtx.stroke();
+    });
+  });
+
+  // sectors
+  planet.sectors.forEach(s => {
+    const cx = s.x/100*w, cy = s.y/100*h;
+    const col = s.owner==='P' ? '#38bdf8' : s.owner==='E' ? '#fb7185' : '#64748b';
+    const isSel = selected && ((selected.type==='sector' && selected.id===s.id) || (selected.type==='army' && selected.sectorId===s.id));
+    const isHover = hoverNode === s.id;
+    const isMoveTarget = srcSec && srcSec.links.includes(s.id);
+
+    if (isMoveTarget) {
+      mapCtx.beginPath();
+      mapCtx.arc(cx, cy, 28 + Math.sin(animTime * 4) * 2, 0, Math.PI*2);
+      mapCtx.strokeStyle = s.owner==='E' ? 'rgba(251, 113, 133, 0.65)' : 'rgba(56, 189, 248, 0.65)';
+      mapCtx.lineWidth = 1.5;
+      mapCtx.stroke();
+    }
+
+    mapCtx.beginPath();
+    mapCtx.arc(cx, cy, 22, 0, Math.PI*2);
+    mapCtx.fillStyle = col + 'cc';
+    mapCtx.fill();
+    mapCtx.strokeStyle = isSel ? '#fff' : isHover ? 'rgba(255,255,255,0.6)' : '#030712';
+    mapCtx.lineWidth = isSel ? 3 : 1.5;
+    mapCtx.stroke();
+
+    mapCtx.fillStyle = '#fff';
+    mapCtx.font = 'bold 12px ui-monospace, monospace';
+    mapCtx.textAlign = 'center';
+    mapCtx.textBaseline = 'middle';
+    mapCtx.fillText(SECTOR_TYPES[s.type].code, cx, cy);
+
+    mapCtx.font = 'bold 10px ui-monospace, monospace';
+    mapCtx.fillStyle = '#e2e8f0';
+    mapCtx.textBaseline = 'alphabetic';
+    mapCtx.fillText(s.name.split(' ').pop().toUpperCase(), cx, cy + 34);
+
+    if (s.armyId && planet.armies[s.armyId]) {
+      const a = planet.armies[s.armyId];
+      const pow = armyPower(a);
+      mapCtx.beginPath();
+      mapCtx.arc(cx + 16, cy - 16, 10, 0, Math.PI*2);
+      mapCtx.fillStyle = a.owner==='P' ? '#38bdf8' : '#fb7185';
+      mapCtx.fill();
+      mapCtx.strokeStyle = '#030712';
+      mapCtx.lineWidth = 1.5;
+      mapCtx.stroke();
+      mapCtx.fillStyle = '#030712';
+      mapCtx.font = 'bold 9px ui-monospace, monospace';
+      mapCtx.textAlign = 'center';
+      mapCtx.textBaseline = 'middle';
+      mapCtx.fillText(String(pow), cx+16, cy-16);
+
+      const comp = summarizeRegsCompact(a.regs);
+      const tag = `${a.regs.length} REG (${pow}P): ${comp}`;
+      mapCtx.font = 'bold 9px ui-monospace, monospace';
+      const tw = mapCtx.measureText(tag).width + 10;
+      mapCtx.fillStyle = 'rgba(2, 6, 23, 0.85)';
+      mapCtx.fillRect(cx - tw/2, cy + 39, tw, 14);
+      mapCtx.strokeStyle = a.owner==='P' ? 'rgba(56,189,248,0.6)' : 'rgba(251,113,133,0.6)';
+      mapCtx.lineWidth = 1;
+      mapCtx.strokeRect(cx - tw/2, cy + 39, tw, 14);
+      mapCtx.fillStyle = a.owner==='P' ? '#38bdf8' : '#fb7185';
+      mapCtx.textAlign = 'center';
+      mapCtx.textBaseline = 'middle';
+      mapCtx.fillText(tag, cx, cy + 46);
+    }
+  });
+
+  // Orbital presence HUD on planet canvas
+  const orbitFleets = getFleetsAt(sys.id);
+  if (orbitFleets.length) {
+    const lines = orbitFleets.map(f => {
+      const cargo = fleetCargoRegs(f);
+      const cargoTxt = cargo.length ? ` • ${cargo.length} embarked (${summarizeRegsCompact(cargo)})` : '';
+      return `${f.owner==='P'?'[ALLY]':'[HOSTILE]'} ${f.name}: ${f.ships.length} ships${cargoTxt}`;
+    });
+    mapCtx.font = 'bold 10px ui-monospace, monospace';
+    const maxW = Math.max(...lines.map(l => mapCtx.measureText(l).width), 140) + 20;
+    const bx = w - maxW - 14;
+    const by = 12;
+    const bh = 22 + lines.length * 16;
+    mapCtx.fillStyle = 'rgba(10, 17, 34, 0.86)';
+    mapCtx.fillRect(bx, by, maxW, bh);
+    mapCtx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+    mapCtx.lineWidth = 1;
+    mapCtx.strokeRect(bx, by, maxW, bh);
+    mapCtx.fillStyle = '#38bdf8';
+    mapCtx.textAlign = 'left';
+    mapCtx.textBaseline = 'top';
+    mapCtx.fillText('ORBITAL PRESENCE', bx + 10, by + 6);
+    lines.forEach((l, idx) => {
+      const f = orbitFleets[idx];
+      mapCtx.fillStyle = f.owner==='P' ? '#e2e8f0' : '#fb7185';
+      mapCtx.fillText(l, bx + 10, by + 22 + idx * 16);
+    });
+  }
+}
+
+mapCanvas.addEventListener('mousemove', e => {
+  if (!G || combat) return;
+  const rect = mapCanvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) / rect.width * 100;
+  const my = (e.clientY - rect.top) / rect.height * 100;
+  let foundId = null;
+
+  if (view === 'GALAXY') {
+    let best = 8;
+    G.systems.forEach(sys => {
+      const d = Math.hypot(sys.x - mx, sys.y - my);
+      if (d < best) { best = d; foundId = sys.id; }
+    });
+  } else {
+    const found = findPlanet(G.activePlanetId);
+    if (found) {
+      let best = 6;
+      found.planet.sectors.forEach(s => {
+        const d = Math.hypot(s.x - mx, s.y - my);
+        if (d < best) { best = d; foundId = s.id; }
+      });
+    }
+  }
+  hoverNode = foundId;
+  mapCanvas.style.cursor = foundId ? 'pointer' : 'crosshair';
+});
+
+mapCanvas.addEventListener('click', e => {
+  if (!G || combat) return;
+  const rect = mapCanvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) / rect.width * 100;
+  const my = (e.clientY - rect.top) / rect.height * 100;
+
+  if (view === 'GALAXY') {
+    let closest = null, best = 8;
+    G.systems.forEach(sys => {
+      const d = Math.hypot(sys.x - mx, sys.y - my);
+      if (d < best) { best = d; closest = sys; }
+    });
+    if (closest) {
+      if (selected && selected.type==='fleet') {
+        const f = G.fleets[selected.id];
+        if (f && f.owner==='P' && !f.moved) {
+          const home = G.systems.find(s => s.id === f.systemId);
+          if (home && home.lanes.includes(closest.id)) {
+            moveFleet(f.id, closest.id);
+            return;
+          }
+        }
+      }
+      G.selectedSystemId = closest.id;
+      if (closest.planets.length) G.activePlanetId = closest.planets[0].id;
+      selected = { type:'system', id: closest.id };
+      render();
+    }
+  } else {
+    const found = findPlanet(G.activePlanetId);
+    if (!found || found.sys.intel === 'UNKNOWN') return;
+    const planet = found.planet;
+    let closest = null, best = 6;
+    planet.sectors.forEach(s => {
+      const d = Math.hypot(s.x - mx, s.y - my);
+      if (d < best) { best = d; closest = s; }
+    });
+    if (closest) {
+      if (selected && selected.type==='army') {
+        const army = planet.armies[selected.id];
+        if (army && army.owner==='P' && !army.moved) {
+          const src = planet.sectors.find(s => s.armyId === army.id);
+          if (src && src.links.includes(closest.id)) {
+            moveArmy(planet, army.id, closest.id);
+            return;
+          }
+        }
+      }
+      selected = { type:'sector', id: closest.id };
+      if (closest.armyId) selected = { type:'army', id: closest.armyId, sectorId: closest.id };
+      selectAllUnitsForCurrent();
+      render();
+    }
+  }
+});
+
+// ============================================================================
+// SIDE PANEL
+// ============================================================================
+function renderSide() {
+  const typeEl = document.getElementById('inspectType');
+  const nameEl = document.getElementById('inspectName');
+  const metaEl = document.getElementById('inspectMeta');
+  const buildEl = document.getElementById('inspectBuild');
+  const listEl = document.getElementById('inspectList');
+  const actEl = document.getElementById('inspectActions');
+  buildEl.innerHTML = '';
+  listEl.innerHTML = '';
+  actEl.innerHTML = '';
+
+  document.getElementById('rCredits').textContent = G.resources.P.c;
+  document.getElementById('rAlloys').textContent = G.resources.P.a;
+  document.getElementById('rManpower').textContent = G.resources.P.m;
+  document.getElementById('iCredits').textContent = '+' + G.income.P.c;
+  document.getElementById('iAlloys').textContent = '+' + G.income.P.a;
+  document.getElementById('iManpower').textContent = '+' + G.income.P.m;
+
+  if (view === 'GALAXY') {
+    const sys = G.systems.find(s => s.id === G.selectedSystemId) || G.systems[0];
+    typeEl.textContent = 'Star System';
+    nameEl.textContent = sys.intel==='UNKNOWN' ? 'Unknown System' : sys.name;
+    metaEl.innerHTML = `INTEL: ${sys.intel} // OWNER: ${sys.owner}<br>PLANETS: ${sys.planets.length}`;
+
+    if (sys.intel !== 'UNKNOWN') {
+      sys.planets.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'list-item';
+        const stationed = Object.values(p.armies).map(a => {
+          const sec = p.sectors.find(s => s.id === a.sectorId);
+          const loc = sec ? sec.name.split(' ').pop() : '?';
+          return `${a.owner==='P'?'[P]':'[E]'} ${a.regs.length} reg @ ${loc}`;
+        });
+        const groundLine = stationed.length ? stationed.join(' • ') : 'No ground armies';
+        div.innerHTML = `<div class="row"><span>${p.name}</span><span class="badge ${ownerBadgeClass(p.orbital)}">${p.orbital}</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${p.blockaded?'BLOCKADED // ':''}SECTORS P/E: ${p.sectors.filter(s=>s.owner==='P').length}/${p.sectors.filter(s=>s.owner==='E').length}</div>
+          <div style="font-size:10px;color:#cbd5e1;margin-top:3px;font-family:var(--font-mono)">ON PLANET: ${groundLine}</div>`;
+        div.onclick = () => {
+          G.activePlanetId = p.id;
+          view = 'PLANET';
+          selected = null;
+          document.querySelectorAll('#viewTabs button').forEach(b => b.classList.toggle('active', b.dataset.view==='PLANET'));
+          render();
+        };
+        listEl.appendChild(div);
+      });
+
+      const pSysFleets = getFleetsAt(sys.id).filter(f => f.owner === 'P');
+      if (pSysFleets.length >= 2) {
+        const btnMerge = document.createElement('button');
+        btnMerge.textContent = `Merge Squadrons (${pSysFleets.length})`;
+        btnMerge.onclick = () => mergePlayerFleets(sys.id);
+        actEl.appendChild(btnMerge);
+      }
+
+      getFleetsAt(sys.id).forEach(f => {
+        const isSel = selected && selected.type==='fleet' && selected.id===f.id;
+        const cargo = fleetCargoRegs(f);
+        const div = document.createElement('div');
+        div.className = 'list-item' + (isSel ? ' selected' : '');
+        div.innerHTML = `<div class="row"><span>${f.name} (${f.ships.length})</span><span class="badge ${ownerBadgeClass(f.owner)}">PWR ${fleetPower(f)}</span></div>
+          <div style="font-size:10px;color:var(--muted);font-family:var(--font-mono);margin-top:2px">${summarizeShips(f.ships)}${f.moved?' • MOVED':''}${cargo.length ? ` • <span style="color:var(--emerald)">${cargo.length} embarked</span>` : ''}</div>`;
+        div.onclick = () => {
+          selected = { type:'fleet', id: f.id };
+          selectAllUnitsForCurrent();
+          render();
+        };
+        listEl.appendChild(div);
+
+        if (isSel) {
+          if (f.owner === 'P' && f.ships.length > 0) {
+            const chosenShips = f.ships.filter(sh => selectedUnitIds.has(sh.id));
+            if (chosenShips.length === 0) selectAllUnitsForCurrent();
+            const curChosen = f.ships.filter(sh => selectedUnitIds.has(sh.id));
+            const sum = document.createElement('div');
+            sum.className = 'sel-summary';
+            sum.innerHTML = `<span>MOVE: ${curChosen.length}/${f.ships.length} SHIPS (${summarizeShipsCompact(curChosen) || 'NONE'})</span>`;
+            const btns = document.createElement('span');
+            btns.className = 'sel-summary-btns';
+            const bAll = document.createElement('button'); bAll.textContent = 'All';
+            bAll.onclick = (ev) => { ev.stopPropagation(); f.ships.forEach(sh => selectedUnitIds.add(sh.id)); renderSide(); };
+            const bNone = document.createElement('button'); bNone.textContent = 'None';
+            bNone.onclick = (ev) => { ev.stopPropagation(); selectedUnitIds.clear(); renderSide(); };
+            btns.appendChild(bAll); btns.appendChild(bNone);
+            sum.appendChild(btns);
+            listEl.appendChild(sum);
+          }
+
+          f.ships.forEach(sh => {
+            const checked = f.owner !== 'P' || selectedUnitIds.has(sh.id);
+            const sDiv = document.createElement('div');
+            sDiv.className = 'list-item' + (checked ? '' : ' unit-off');
+            sDiv.style.marginLeft = '10px';
+            sDiv.style.borderLeftColor = f.owner==='P' ? (checked ? 'var(--sky)' : 'var(--muted)') : 'var(--rose)';
+            const cargoTxt = sh.cargo && sh.cargo.length
+              ? `<div style="font-size:10px;color:var(--emerald);margin-top:2px;font-family:var(--font-mono)">ON SHIP: ${summarizeRegs(sh.cargo)}</div>`
+              : (sh.type==='TRANSPORT' ? `<div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:var(--font-mono)">ON SHIP: Empty cargo bay (0/4)</div>` : '');
+            const checkBox = f.owner === 'P' ? `<span class="unit-check">${checked ? '[✓]' : '[ ]'}</span>` : '';
+            sDiv.innerHTML = `<div class="row"><span>${checkBox}${sh.name}</span><span style="font-family:var(--font-mono);font-size:10px;color:#94a3b8">${sh.hp}/${sh.maxHp} HP • ${sh.shields} SHD</span></div>${cargoTxt}`;
+            if (f.owner === 'P') {
+              sDiv.onclick = (ev) => {
+                ev.stopPropagation();
+                if (selectedUnitIds.has(sh.id)) selectedUnitIds.delete(sh.id);
+                else selectedUnitIds.add(sh.id);
+                renderSide();
+              };
+            }
+            listEl.appendChild(sDiv);
+          });
+        }
+      });
+
+      if (selected && selected.type==='fleet') {
+        const f = G.fleets[selected.id];
+        if (f && f.owner==='P') {
+          if (!f.moved) {
+            const hint = document.createElement('button');
+            hint.className = 'hint';
+            hint.disabled = true;
+            hint.textContent = 'Click highlighted system to jump';
+            actEl.appendChild(hint);
+          }
+          const planet = sys.planets[0];
+          if (planet && !getFleetsAt(sys.id).some(ef=>ef.owner==='E')) {
+            const btnB = document.createElement('button');
+            btnB.textContent = planet.blockaded ? 'Lift Blockade' : 'Blockade';
+            btnB.onclick = () => toggleBlockade(f.id, planet.id);
+            actEl.appendChild(btnB);
+
+            const btnBomb = document.createElement('button');
+            btnBomb.className = 'bad';
+            btnBomb.textContent = 'Bombard (+2)';
+            btnBomb.disabled = f.acted;
+            btnBomb.onclick = () => bombard(f.id, planet.id);
+            actEl.appendChild(btnBomb);
+
+            const cargo = f.ships.reduce((s,sh)=>s+(sh.cargo?sh.cargo.length:0),0);
+            if (cargo > 0) {
+              const btnDrop = document.createElement('button');
+              btnDrop.className = 'good';
+              btnDrop.textContent = `Drop Troops (${cargo})`;
+              btnDrop.onclick = () => dropForces(f.id, planet.id);
+              actEl.appendChild(btnDrop);
+            }
+          }
+        }
+      }
+
+      const canBuild = sys.planets.some(p => !p.blockaded && p.sectors.some(s => s.type==='SPACEPORT' && s.owner==='P'))
+        && !getFleetsAt(sys.id).some(f => f.owner==='E');
+      if (canBuild) {
+        const mod = document.createElement('div');
+        mod.className = 'build-module';
+        const hull = SHIP_TYPES[selectedShipHull];
+        const affordable = canAfford('P', hull.cost);
+
+        mod.innerHTML = `
+          <div class="build-module-label">
+            <span>Orbital Shipyard</span>
+            <span style="color:${affordable ? 'var(--emerald)' : 'var(--rose)'}">${affordable ? 'READY' : 'LOW RES'}</span>
+          </div>
+          <div class="build-controls">
+            <select class="tactical-select" id="shipHullSelect"></select>
+            <button class="build-btn" id="btnBuildShip"${affordable ? '' : ' disabled'}>Build</button>
+          </div>
+          <div class="build-specs">${hull.desc} • ${hull.shields} SHD</div>
+        `;
+        buildEl.appendChild(mod);
+
+        const selEl = mod.querySelector('#shipHullSelect');
+        ['CORVETTE','CRUISER','CARRIER','TRANSPORT'].forEach(t => {
+          const st = SHIP_TYPES[t];
+          const opt = document.createElement('option');
+          opt.value = t;
+          opt.textContent = `${st.name} (${st.cost.a}A / ${st.cost.c}C)`;
+          if (t === selectedShipHull) opt.selected = true;
+          selEl.appendChild(opt);
+        });
+        selEl.onchange = () => {
+          selectedShipHull = selEl.value;
+          renderSide();
+        };
+        mod.querySelector('#btnBuildShip').onclick = () => buildShip(sys.id, selectedShipHull);
+      }
+    }
+  } else {
+    const found = findPlanet(G.activePlanetId);
+    if (!found) return;
+    const { sys, planet } = found;
+    typeEl.textContent = 'Planetary Surface';
+    nameEl.textContent = sys.intel === 'UNKNOWN' ? 'Uncharted World' : planet.name;
+    metaEl.innerHTML = sys.intel === 'UNKNOWN'
+      ? 'INTEL: UNKNOWN // NO SURFACE TELEMETRY'
+      : `ORBIT: ${planet.orbital}${planet.blockaded?' // BLOCKADED':''}<br>CYCLE ${String(planet.turn).padStart(2,'0')}`;
+
+    if (sys.intel === 'UNKNOWN') {
+      const div = document.createElement('div');
+      div.className = 'list-item';
+      div.innerHTML = `<div class="row"><span>Scanner Lock Required</span><span class="badge n">UNKNOWN</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Jump a fleet to this system from the Star Map to reveal planetary sectors.</div>`;
+      listEl.appendChild(div);
+      return;
+    }
+
+    if (selected && (selected.type==='sector' || selected.type==='army')) {
+      const secId = selected.type==='sector' ? selected.id : selected.sectorId;
+      const sec = planet.sectors.find(s => s.id === secId);
+      if (sec) {
+        const div = document.createElement('div');
+        div.className = 'list-item selected';
+        div.innerHTML = `<div class="row"><strong>${sec.name}</strong><span class="badge ${ownerBadgeClass(sec.owner)}">${sec.owner}</span></div>
+          <div style="font-size:11px;color:var(--muted)">${SECTOR_TYPES[sec.type].label} // Fort ${sec.fort}</div>`;
+        listEl.appendChild(div);
+
+        if (sec.armyId && planet.armies[sec.armyId]) {
+          const army = planet.armies[sec.armyId];
+          const hdr = document.createElement('div');
+          hdr.className = 'list-item';
+          hdr.style.borderLeftColor = army.owner==='P' ? 'var(--sky)' : 'var(--rose)';
+          hdr.innerHTML = `<div class="row"><span>ON PLANET: ${army.name}</span><span class="badge ${ownerBadgeClass(army.owner)}">${army.regs.length}/6 REG</span></div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:var(--font-mono)">${summarizeRegs(army.regs)} • PWR ${armyPower(army)}${army.moved?' • Moved':''}</div>`;
+          listEl.appendChild(hdr);
+
+          if (army.owner === 'P' && army.regs.length > 0) {
+            const chosenRegs = army.regs.filter(r => selectedUnitIds.has(r.id));
+            if (chosenRegs.length === 0) selectAllUnitsForCurrent();
+            const curChosen = army.regs.filter(r => selectedUnitIds.has(r.id));
+            const sum = document.createElement('div');
+            sum.className = 'sel-summary';
+            sum.innerHTML = `<span>MOVE: ${curChosen.length}/${army.regs.length} REG (${summarizeRegsCompact(curChosen) || 'NONE'})</span>`;
+            const btns = document.createElement('span');
+            btns.className = 'sel-summary-btns';
+            const bAll = document.createElement('button'); bAll.textContent = 'All';
+            bAll.onclick = () => { army.regs.forEach(r => selectedUnitIds.add(r.id)); renderSide(); };
+            const bNone = document.createElement('button'); bNone.textContent = 'None';
+            bNone.onclick = () => { selectedUnitIds.clear(); renderSide(); };
+            btns.appendChild(bAll); btns.appendChild(bNone);
+            sum.appendChild(btns);
+            listEl.appendChild(sum);
+          }
+
+          army.regs.forEach(r => {
+            const checked = army.owner !== 'P' || selectedUnitIds.has(r.id);
+            const d = document.createElement('div');
+            d.className = 'list-item' + (checked ? '' : ' unit-off');
+            d.style.marginLeft = '8px';
+            d.style.borderLeftColor = army.owner==='P' ? (checked ? 'var(--sky)' : 'var(--muted)') : 'var(--rose)';
+            const checkBox = army.owner === 'P' ? `<span class="unit-check">${checked ? '[✓]' : '[ ]'}</span>` : '';
+            d.innerHTML = `<div class="row"><span>${checkBox}${r.name}</span><span style="font-family:var(--font-mono);font-size:10px">${r.hp}/${r.maxHp} HP</span></div>
+              <div style="font-size:10px;color:var(--muted);font-family:var(--font-mono)">ATK ${r.atk} • DEF ${r.def} • RNG ${r.range}</div>`;
+            if (army.owner === 'P') {
+              d.onclick = () => {
+                if (selectedUnitIds.has(r.id)) selectedUnitIds.delete(r.id);
+                else selectedUnitIds.add(r.id);
+                renderSide();
+              };
+            }
+            listEl.appendChild(d);
+          });
+          if (army.owner==='P' && !army.moved) {
+            const hint = document.createElement('button');
+            hint.className = 'hint';
+            hint.disabled = true;
+            hint.textContent = 'Click adjacent sector to move / split / attack';
+            actEl.appendChild(hint);
+          }
+        }
+
+        if (sec.type==='SPACEPORT' && sec.owner==='P' && !planet.blockaded) {
+          const mod = document.createElement('div');
+          mod.className = 'build-module';
+          const reg = REG_TYPES[selectedRegType];
+          const secArmy = sec.armyId ? planet.armies[sec.armyId] : null;
+          const armyFull = Boolean(secArmy && secArmy.regs.length >= 6);
+          const affordable = canAfford('P', reg.cost);
+          const statusLabel = armyFull ? 'FULL (6/6)' : affordable ? 'READY' : 'LOW RES';
+          const statusColor = armyFull ? 'var(--amber)' : affordable ? 'var(--emerald)' : 'var(--rose)';
+
+          mod.innerHTML = `
+            <div class="build-module-label">
+              <span>Ground Barracks</span>
+              <span style="color:${statusColor}">${statusLabel}</span>
+            </div>
+            <div class="build-controls">
+              <select class="tactical-select" id="regTypeSelect"></select>
+              <button class="build-btn" id="btnRecruitReg"${affordable && !armyFull ? '' : ' disabled'}>Recruit</button>
+            </div>
+            <div class="build-specs">${reg.desc} • ${reg.def} DEF</div>
+          `;
+          buildEl.appendChild(mod);
+
+          const selEl = mod.querySelector('#regTypeSelect');
+          Object.keys(REG_TYPES).forEach(t => {
+            const rt = REG_TYPES[t];
+            const c = rt.cost;
+            const parts = [`${c.m}M`];
+            if (c.a) parts.push(`${c.a}A`);
+            if (c.c) parts.push(`${c.c}C`);
+            const opt = document.createElement('option');
+            opt.value = t;
+            opt.textContent = `${rt.name} (${parts.join(' / ')})`;
+            if (t === selectedRegType) opt.selected = true;
+            selEl.appendChild(opt);
+          });
+          selEl.onchange = () => {
+            selectedRegType = selEl.value;
+            renderSide();
+          };
+          mod.querySelector('#btnRecruitReg').onclick = () => recruit(planet.id, sec.id, selectedRegType);
+        }
+
+        if (sec.owner==='P' && !planet.blockaded) {
+          const validKeys = Object.keys(BUILDING_TYPES).filter(k => {
+            if (k === 'FORTIFY') return sec.fort < 5;
+            return sec.type !== 'CAPITAL' && sec.type !== k;
+          });
+          if (validKeys.length) {
+            if (!validKeys.includes(selectedBuilding)) selectedBuilding = validKeys[0];
+            const bMod = document.createElement('div');
+            bMod.className = 'build-module';
+            const b = BUILDING_TYPES[selectedBuilding];
+            const bAfford = canAfford('P', b.cost);
+            bMod.innerHTML = `
+              <div class="build-module-label">
+                <span>Sector Construction</span>
+                <span style="color:${bAfford ? 'var(--emerald)' : 'var(--rose)'}">${bAfford ? 'READY' : 'LOW RES'}</span>
+              </div>
+              <div class="build-controls">
+                <select class="tactical-select" id="buildStructureSelect"></select>
+                <button class="build-btn" id="btnBuildStructure"${bAfford ? '' : ' disabled'}>Construct</button>
+              </div>
+              <div class="build-specs">${b.desc}</div>
+            `;
+            buildEl.appendChild(bMod);
+
+            const bSel = bMod.querySelector('#buildStructureSelect');
+            validKeys.forEach(k => {
+              const bt = BUILDING_TYPES[k];
+              const opt = document.createElement('option');
+              opt.value = k;
+              opt.textContent = `${bt.name} (${bt.cost.a}A / ${bt.cost.c}C)`;
+              if (k === selectedBuilding) opt.selected = true;
+              bSel.appendChild(opt);
+            });
+            bSel.onchange = () => {
+              selectedBuilding = bSel.value;
+              renderSide();
+            };
+            bMod.querySelector('#btnBuildStructure').onclick = () => buildSectorStructure(planet.id, sec.id, selectedBuilding);
+          }
+        }
+
+        const backBtn = document.createElement('button');
+        backBtn.textContent = 'All Sectors';
+        backBtn.onclick = () => { selected = null; render(); };
+        actEl.appendChild(backBtn);
+      }
+    } else {
+      const orbitFleets = getFleetsAt(sys.id);
+      orbitFleets.forEach(f => {
+        const cargo = fleetCargoRegs(f);
+        const fDiv = document.createElement('div');
+        fDiv.className = 'list-item';
+        fDiv.style.borderLeftColor = f.owner==='P' ? 'var(--emerald)' : 'var(--rose)';
+        fDiv.innerHTML = `<div class="row"><span>ORBIT: ${f.name}</span><span class="badge ${ownerBadgeClass(f.owner)}">${f.ships.length} SHIPS</span></div>
+          <div style="font-size:10px;color:${cargo.length?'var(--emerald)':'var(--muted)'};margin-top:2px;font-family:var(--font-mono)">ON SHIPS: ${cargo.length ? `${cargo.length} reg (${summarizeRegs(cargo)})` : 'No embarked troops'}</div>`;
+        listEl.appendChild(fDiv);
+        if (f.owner==='P' && cargo.length > 0) {
+          const btnDrop = document.createElement('button');
+          btnDrop.className = 'good';
+          btnDrop.textContent = `Drop Troops from Orbit (${cargo.length})`;
+          btnDrop.onclick = () => dropForces(f.id, planet.id);
+          actEl.appendChild(btnDrop);
+        }
+      });
+
+      planet.sectors.forEach(s => {
+        const div = document.createElement('div');
+        div.className = 'list-item';
+        const army = s.armyId ? planet.armies[s.armyId] : null;
+        if (army) div.style.borderLeftColor = army.owner==='P' ? 'var(--sky)' : 'var(--rose)';
+        const unitInfo = army
+          ? `<div style="font-size:10px;color:${army.owner==='P'?'var(--sky)':'var(--rose)'};margin-top:2px;font-family:var(--font-mono)">ON PLANET: ${army.regs.length} reg (${summarizeRegs(army.regs)}) • PWR ${armyPower(army)}</div>`
+          : `<div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:var(--font-mono)">Fort ${s.fort} • No stationed troops</div>`;
+        div.innerHTML = `<div class="row"><span>[${SECTOR_TYPES[s.type].code}] ${s.name}</span><span class="badge ${ownerBadgeClass(s.owner)}">${s.owner}</span></div>${unitInfo}`;
+        div.onclick = () => {
+          selected = { type:'sector', id: s.id };
+          if (s.armyId) selected = { type:'army', id: s.armyId, sectorId: s.id };
+          selectAllUnitsForCurrent();
+          render();
+        };
+        listEl.appendChild(div);
+      });
+    }
+  }
+}
+
+function render() {
+  renderMap();
+  renderSide();
+}
+
+// ============================================================================
+// UI HOOKS & ANIMATION LOOP
+// ============================================================================
+document.querySelectorAll('#viewTabs button').forEach(btn => {
+  btn.onclick = () => {
+    if (!G) return;
+    view = btn.dataset.view;
+    document.querySelectorAll('#viewTabs button').forEach(b => b.classList.toggle('active', b===btn));
+    selected = null;
+    render();
+  };
+});
+
+document.getElementById('btnEndTurn').onclick = endGalacticTurn;
+document.getElementById('btnNew').onclick = () => {
+  document.getElementById('menu').classList.add('show');
+};
+
+function startCampaign(quick = false) {
+  document.getElementById('menu').classList.remove('show');
+  G = createCampaign(quick);
+  refreshIncome();
+  view = 'GALAXY';
+  document.querySelectorAll('#viewTabs button').forEach(b => b.classList.toggle('active', b.dataset.view==='GALAXY'));
+  selected = null;
+  logLines = [];
+  log(quick
+    ? 'Quick Skirmish initialized. Sector intel unlocked and vanguard fleets reinforced.'
+    : 'Campaign initialized. Expand from Helios and Aurelia to capture enemy citadels.');
+  log('Select a fleet, then click a connected system to jump. Open planets to manage ground forces.');
+  document.getElementById('turnLabel').textContent = `CYCLE ${String(G.turn).padStart(2,'0')} // SOLAR VANGUARD`;
+  render();
+}
+
+let lastCombatTs = 0;
+function tick(ts) {
+  const dt = lastCombatTs ? Math.min(0.05, (ts - lastCombatTs) * 0.001) : 0.016;
+  lastCombatTs = ts;
+  animTime = ts * 0.001;
+  if (combat) {
+    updateCombat(dt);
+    drawCombat();
+  } else {
+    renderMap();
+  }
+  requestAnimationFrame(tick);
+}
+
+window.addEventListener('resize', () => {
+  resizeMap();
+  if (combat) {
+    resizeCombatCanvas();
+    drawCombat();
+  }
+});
+
+window.onload = () => {
+  resizeMap();
+  requestAnimationFrame(tick);
+};
+// PHASE 3: expanded combat VFX, ship wreck persistence, weapon-specific projectiles, animation pulses and faction-weighted audio.
+</script>
+</body>
+</html>
